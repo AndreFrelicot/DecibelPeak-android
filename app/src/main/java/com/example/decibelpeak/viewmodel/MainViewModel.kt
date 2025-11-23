@@ -33,6 +33,8 @@ class MainViewModel : ViewModel() {
     private val _dbHistory = MutableStateFlow<List<Double>>(emptyList())
     val dbHistory: StateFlow<List<Double>> = _dbHistory.asStateFlow()
 
+    private var lastUpdateTime = 0L
+
     fun toggleRecording() {
         if (_isRecording.value) {
             stopRecording()
@@ -46,7 +48,13 @@ class MainViewModel : ViewModel() {
         recordingJob = viewModelScope.launch {
             audioRecorder.startRecording().collect { buffer ->
                 val db = audioProcessor.calculateDecibel(buffer)
-                _decibelLevel.value = db
+                
+                // Throttle updates for UI stability (every ~100ms)
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastUpdateTime > 100) {
+                    _decibelLevel.value = db
+                    lastUpdateTime = currentTime
+                }
                 
                 // Update history (keep last 100 points)
                 val currentHistory = _dbHistory.value.toMutableList()
