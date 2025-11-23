@@ -31,16 +31,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.decibelpeak.ui.components.CircularGaugeView
-import com.example.decibelpeak.ui.components.FFTSpectrumView
-import com.example.decibelpeak.ui.components.FFTWaterfallView
 import com.example.decibelpeak.ui.components.RecordButton
 import com.example.decibelpeak.ui.components.SoundLevelIndicator
-import com.example.decibelpeak.ui.components.WaveformView
+import com.example.decibelpeak.ui.components.VisualizationCarousel
 import com.example.decibelpeak.ui.theme.BackgroundDark
 import com.example.decibelpeak.ui.theme.BackgroundDarker
 import com.example.decibelpeak.ui.theme.DecibelPeakTheme
@@ -73,6 +72,10 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val waveformSamples by viewModel.waveformSamples.collectAsState()
     val frequencyBands by viewModel.frequencyBands.collectAsState()
     val waterfallData by viewModel.waterfallData.collectAsState()
+    val dbHistory by viewModel.dbHistory.collectAsState()
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
     LaunchedEffect(Unit) {
         if (!permissionState.status.isGranted) {
@@ -112,34 +115,34 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Visualization Area (Carousel placeholder for now, showing Spectrum)
-                Box(
+                // Visualization Carousel
+                VisualizationCarousel(
+                    viewModel = viewModel,
+                    isRecording = isRecording,
+                    decibelLevel = decibelLevel,
+                    waveformSamples = waveformSamples,
+                    frequencyBands = frequencyBands,
+                    waterfallData = waterfallData,
+                    dbHistory = dbHistory,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp)
-                        .background(Color.White.copy(alpha = 0.05f), shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
-                        .padding(16.dp)
-                ) {
-                    if (isRecording) {
-                        // Simple toggle for demo purposes or just show one
-                        // For now, let's overlay them or pick one. 
-                        // Let's show Spectrum as default
-                        FFTSpectrumView(frequencyBands = frequencyBands)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(40.dp))
-
-                // Gauge
-                CircularGaugeView(
-                    value = decibelLevel,
-                    isRecording = isRecording,
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .aspectRatio(1f)
+                        .weight(1f) // Take available space
                 )
 
-                Spacer(modifier = Modifier.weight(1f))
+                if (!isLandscape) {
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Gauge (Portrait only)
+                    CircularGaugeView(
+                        value = decibelLevel,
+                        isRecording = isRecording,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .aspectRatio(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Sound Level Indicators
                 Row(

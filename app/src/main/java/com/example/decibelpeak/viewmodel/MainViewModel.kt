@@ -30,6 +30,9 @@ class MainViewModel : ViewModel() {
     private val _waterfallData = MutableStateFlow<List<List<Float>>>(emptyList())
     val waterfallData: StateFlow<List<List<Float>>> = _waterfallData.asStateFlow()
 
+    private val _dbHistory = MutableStateFlow<List<Double>>(emptyList())
+    val dbHistory: StateFlow<List<Double>> = _dbHistory.asStateFlow()
+
     fun toggleRecording() {
         if (_isRecording.value) {
             stopRecording()
@@ -44,6 +47,14 @@ class MainViewModel : ViewModel() {
             audioRecorder.startRecording().collect { buffer ->
                 val db = audioProcessor.calculateDecibel(buffer)
                 _decibelLevel.value = db
+                
+                // Update history (keep last 100 points)
+                val currentHistory = _dbHistory.value.toMutableList()
+                if (currentHistory.size >= 100) {
+                    currentHistory.removeAt(0)
+                }
+                currentHistory.add(db)
+                _dbHistory.value = currentHistory
                 
                 // Downsample for waveform
                 val downsampled = buffer.filterIndexed { index, _ -> index % 10 == 0 }.toList()
@@ -69,5 +80,6 @@ class MainViewModel : ViewModel() {
         _decibelLevel.value = 0.0
         _waveformSamples.value = emptyList()
         _frequencyBands.value = List(64) { 0f }
+        _dbHistory.value = emptyList()
     }
 }
