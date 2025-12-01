@@ -1,4 +1,4 @@
-package com.example.decibelpeak.audio
+package dev.andrefrelicot.decibelpeak.audio
 
 import android.annotation.SuppressLint
 import android.media.AudioFormat

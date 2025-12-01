@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.components
+package dev.andrefrelicot.decibelpeak.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -28,10 +28,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.min
-import com.example.decibelpeak.ui.theme.DecibelGreen
-import com.example.decibelpeak.ui.theme.DecibelOrange
-import com.example.decibelpeak.ui.theme.DecibelRed
-import com.example.decibelpeak.ui.theme.DecibelYellow
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelRed
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelYellow
 
 @Composable
 fun CircularGaugeView(

@@ -1,4 +1,4 @@
-package com.example.decibelpeak.model
+package dev.andrefrelicot.decibelpeak.model
 
 /**
  * Timestamped dB value for smooth curve scrolling (matching iOS implementation)

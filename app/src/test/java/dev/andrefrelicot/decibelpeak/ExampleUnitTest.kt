@@ -1,4 +1,4 @@
-package com.example.decibelpeak
+package dev.andrefrelicot.decibelpeak
 
 import org.junit.Test
 

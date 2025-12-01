@@ -1,10 +1,10 @@
-package com.example.decibelpeak.viewmodel
+package dev.andrefrelicot.decibelpeak.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.decibelpeak.audio.AudioProcessor
-import com.example.decibelpeak.audio.AudioRecorder
-import com.example.decibelpeak.model.TimestampedDbValue
+import dev.andrefrelicot.decibelpeak.audio.AudioProcessor
+import dev.andrefrelicot.decibelpeak.audio.AudioRecorder
+import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

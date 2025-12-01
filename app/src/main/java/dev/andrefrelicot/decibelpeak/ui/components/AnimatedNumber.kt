@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.components
+package dev.andrefrelicot.decibelpeak.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform

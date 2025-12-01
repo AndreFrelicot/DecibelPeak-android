@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.theme
+package dev.andrefrelicot.decibelpeak.ui.theme
 
 import android.app.Activity
 import android.os.Build

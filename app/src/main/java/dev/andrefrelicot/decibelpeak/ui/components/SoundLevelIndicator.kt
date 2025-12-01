@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.components
+package dev.andrefrelicot.decibelpeak.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column

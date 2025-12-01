@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.components
+package dev.andrefrelicot.decibelpeak.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,11 +22,11 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
-import com.example.decibelpeak.model.TimestampedDbValue
-import com.example.decibelpeak.ui.theme.DecibelGreen
-import com.example.decibelpeak.ui.theme.DecibelOrange
-import com.example.decibelpeak.ui.theme.DecibelRed
-import com.example.decibelpeak.ui.theme.DecibelYellow
+import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelRed
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelYellow
 import android.graphics.Paint
 import android.graphics.Typeface
 import kotlinx.coroutines.delay

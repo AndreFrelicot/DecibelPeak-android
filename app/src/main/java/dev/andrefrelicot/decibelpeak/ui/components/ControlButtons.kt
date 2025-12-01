@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.components
+package dev.andrefrelicot.decibelpeak.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,9 +28,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.decibelpeak.ui.theme.DecibelGreen
-import com.example.decibelpeak.ui.theme.DecibelOrange
-import com.example.decibelpeak.ui.theme.DecibelRed
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelRed
 
 @Composable
 fun RecordButton(

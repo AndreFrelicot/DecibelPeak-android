@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.theme
+package dev.andrefrelicot.decibelpeak.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

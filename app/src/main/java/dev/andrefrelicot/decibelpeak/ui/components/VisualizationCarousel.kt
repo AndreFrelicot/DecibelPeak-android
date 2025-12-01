@@ -1,4 +1,4 @@
-package com.example.decibelpeak.ui.components
+package dev.andrefrelicot.decibelpeak.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -30,8 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.decibelpeak.model.TimestampedDbValue
-import com.example.decibelpeak.viewmodel.MainViewModel
+import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
+import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)

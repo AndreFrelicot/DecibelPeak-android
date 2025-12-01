@@ -1,4 +1,4 @@
-package com.example.decibelpeak
+package dev.andrefrelicot.decibelpeak
 
 import android.Manifest
 import android.os.Bundle
@@ -37,20 +37,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.decibelpeak.ui.components.AnimatedNumber
-import com.example.decibelpeak.ui.components.CircularGaugeView
-import com.example.decibelpeak.ui.components.LandscapeControlButton
-import com.example.decibelpeak.ui.components.RecordButton
-import com.example.decibelpeak.ui.components.SoundLevelIndicator
-import com.example.decibelpeak.ui.components.VisualizationCarousel
-import com.example.decibelpeak.ui.components.getDecibelColor
-import com.example.decibelpeak.ui.theme.BackgroundDark
-import com.example.decibelpeak.ui.theme.BackgroundDarker
-import com.example.decibelpeak.ui.theme.DecibelPeakTheme
-import com.example.decibelpeak.ui.theme.SpeakerLoud
-import com.example.decibelpeak.ui.theme.SpeakerModerate
-import com.example.decibelpeak.ui.theme.SpeakerQuiet
-import com.example.decibelpeak.viewmodel.MainViewModel
+import dev.andrefrelicot.decibelpeak.ui.components.AnimatedNumber
+import dev.andrefrelicot.decibelpeak.ui.components.CircularGaugeView
+import dev.andrefrelicot.decibelpeak.ui.components.LandscapeControlButton
+import dev.andrefrelicot.decibelpeak.ui.components.RecordButton
+import dev.andrefrelicot.decibelpeak.ui.components.SoundLevelIndicator
+import dev.andrefrelicot.decibelpeak.ui.components.VisualizationCarousel
+import dev.andrefrelicot.decibelpeak.ui.components.getDecibelColor
+import dev.andrefrelicot.decibelpeak.ui.theme.BackgroundDark
+import dev.andrefrelicot.decibelpeak.ui.theme.BackgroundDarker
+import dev.andrefrelicot.decibelpeak.ui.theme.DecibelPeakTheme
+import dev.andrefrelicot.decibelpeak.ui.theme.SpeakerLoud
+import dev.andrefrelicot.decibelpeak.ui.theme.SpeakerModerate
+import dev.andrefrelicot.decibelpeak.ui.theme.SpeakerQuiet
+import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -154,7 +154,7 @@ private fun LandscapeLayout(
     frequencyBands: List<Float>,
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
-    timestampedDbHistory: List<com.example.decibelpeak.model.TimestampedDbValue>,
+    timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
     onToggleRecording: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -283,7 +283,7 @@ private fun PortraitLayout(
     frequencyBands: List<Float>,
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
-    timestampedDbHistory: List<com.example.decibelpeak.model.TimestampedDbValue>,
+    timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
     onToggleRecording: () -> Unit
 ) {
     Column(

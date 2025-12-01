@@ -1,4 +1,4 @@
-package com.example.decibelpeak.audio
+package dev.andrefrelicot.decibelpeak.audio
 
 import kotlin.math.PI
 import kotlin.math.cos
