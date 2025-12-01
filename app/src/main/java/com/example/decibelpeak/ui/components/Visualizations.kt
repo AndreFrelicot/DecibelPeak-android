@@ -96,18 +96,25 @@ fun FFTWaterfallView(
             val y = rowIndex * cellHeight
             row.forEachIndexed { colIndex, amplitude ->
                 val x = colIndex * cellWidth
-                val color = getColorForFrequency(colIndex, cols, amplitude)
-                val opacity = if (amplitude == 0f) 0.02f else (amplitude * 1.2f + 0.1f).coerceIn(0.1f, 1.0f)
+                val color = getWaterfallColor(colIndex, cols, amplitude)
+                // Adjusted opacity to avoid "opaque layer" look for low amplitudes
+                // iOS uses max(0.1, ...), but we might have higher noise floor or different rendering
+                // Allowing it to go lower than 0.1 for better contrast
+                val opacity = if (amplitude == 0f) 0.0f else (amplitude * 1.5f).coerceIn(0.0f, 1.0f)
                 
-                drawRect(
-                    color = color.copy(alpha = opacity),
-                    topLeft = Offset(x, y),
-                    size = Size(cellWidth, cellHeight)
-                )
+                if (opacity > 0.01f) {
+                    drawRect(
+                        color = color.copy(alpha = opacity),
+                        topLeft = Offset(x, y),
+                        size = Size(cellWidth, cellHeight)
+                    )
+                }
             }
         }
     }
 }
+
+// ... (SpectrumView and FFTCircularView remain unchanged)
 
 @Composable
 fun SpectrumView(
@@ -263,6 +270,19 @@ fun DbCurveView(
             )
         )
     }
+}
+
+private fun getWaterfallColor(index: Int, totalCount: Int, amplitude: Float): Color {
+    val ratio = index.toFloat() / max(totalCount - 1, 1)
+    val logAmplitude = log10(max(0.001f, amplitude) + 0.001f) + 3.0f
+    val normalizedAmplitude = (logAmplitude / 3.0f).coerceIn(0.0f, 1.0f)
+    
+    // Blue to Red spectrum (240 -> 0)
+    val hue = 240f * (1.0f - ratio)
+    val saturation = 0.8f + normalizedAmplitude * 0.2f
+    val brightness = 0.3f + normalizedAmplitude * 0.7f
+    
+    return Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, saturation, brightness)))
 }
 
 private fun getColorForLevel(level: Float): Color {
