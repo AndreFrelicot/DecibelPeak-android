@@ -248,11 +248,15 @@ fun getDecibelDescription(value: Double): String {
     }
 }
 
+// iOS system blue color
+private val DecibelBlue = Color(0xFF007AFF)
+
 fun getDecibelColor(value: Double): Color {
     return when {
-        value < 60 -> DecibelGreen
-        value < 85 -> DecibelYellow
-        value < 100 -> DecibelOrange
-        else -> DecibelRed
+        value < 40 -> DecibelBlue    // Blue: 0-40 dB (matching iOS)
+        value < 60 -> DecibelGreen   // Green: 40-60 dB
+        value < 80 -> DecibelYellow  // Yellow: 60-80 dB
+        value < 100 -> DecibelOrange // Orange: 80-100 dB
+        else -> DecibelRed           // Red: 100+ dB
     }
 }
