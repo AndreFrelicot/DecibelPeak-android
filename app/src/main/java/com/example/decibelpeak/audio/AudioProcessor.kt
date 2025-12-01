@@ -6,11 +6,24 @@ import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.math.roundToInt
 
 class AudioProcessor {
     private val fftSize = 1024
+    private val sampleRate = 44100f
+    private val bandCount = 64
     private val window = FloatArray(fftSize) { i ->
         0.5f * (1 - cos(2.0 * PI * i / (fftSize - 1))).toFloat() // Hanning window
+    }
+
+    // Pre-calculate logarithmic frequency bands (matching iOS: 20Hz to 20kHz)
+    private val logFrequencies: FloatArray = FloatArray(bandCount) { i ->
+        val minFreq = 20f
+        val maxFreq = 20000f
+        val logMin = log10(minFreq)
+        val logMax = log10(maxFreq)
+        val logFreq = logMin + (i.toFloat() / (bandCount - 1)) * (logMax - logMin)
+        10f.pow(logFreq)
     }
 
     fun calculateDecibel(buffer: FloatArray): Double {
@@ -36,7 +49,9 @@ class AudioProcessor {
 
         fft(real, imag)
 
-        val magnitudes = FloatArray(fftSize / 2)
+        // Calculate magnitudes for all bins
+        val magnitudeCount = fftSize / 2
+        val magnitudes = FloatArray(magnitudeCount)
         for (i in magnitudes.indices) {
             val r = real[i]
             val im = imag[i]
@@ -48,12 +63,32 @@ class AudioProcessor {
         val maxDB = 0f
         val dbRange = maxDB - minDB
 
-        return magnitudes.take(64).map { magnitude ->
-            // Convert to dB (matching iOS)
-            val db = 20f * log10(magnitude.coerceAtLeast(0.000001f))
-            // Clamp to range and normalize to 0-1
+        val dbMagnitudes = FloatArray(magnitudeCount) { i ->
+            val db = 20f * log10(magnitudes[i].coerceAtLeast(0.000001f))
             val clampedDb = db.coerceIn(minDB, maxDB)
             (clampedDb - minDB) / dbRange
+        }
+
+        // Match iOS: Map to logarithmic frequency bands (20Hz - 20kHz)
+        val nyquistFrequency = sampleRate / 2f
+        val frequencyResolution = nyquistFrequency / magnitudeCount
+
+        return logFrequencies.map { frequency ->
+            val binIndex = (frequency / frequencyResolution).roundToInt()
+            if (binIndex < magnitudeCount) {
+                // Average surrounding bins for smoother representation (matching iOS)
+                val startBin = maxOf(0, binIndex - 1)
+                val endBin = minOf(magnitudeCount - 1, binIndex + 1)
+                var sum = 0f
+                var count = 0
+                for (bin in startBin..endBin) {
+                    sum += dbMagnitudes[bin]
+                    count++
+                }
+                if (count > 0) sum / count else 0f
+            } else {
+                0f
+            }
         }
     }
 
