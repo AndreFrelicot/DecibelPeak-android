@@ -49,7 +49,7 @@ fun RecordButton(
         val IosRed = Color(0xFFFF3B30)
         Brush.horizontalGradient(listOf(IosGreen, IosRed))
     }
-    
+
     val shadowColor = if (isRecording) DecibelRed else Color.Blue
 
     Box(
@@ -80,5 +80,46 @@ fun RecordButton(
                 fontWeight = FontWeight.SemiBold
             )
         }
+    }
+}
+
+/**
+ * Circular control button for landscape mode (matching iOS)
+ */
+@Composable
+fun LandscapeControlButton(
+    isRecording: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val gradient = if (isRecording) {
+        // iOS Red to Orange for stop
+        val IosRed = Color(0xFFFF3B30)
+        val IosOrange = Color(0xFFFF9500)
+        Brush.horizontalGradient(listOf(IosRed, IosOrange))
+    } else {
+        // iOS Green to Red for start
+        val IosGreen = Color(0xFF34C759)
+        val IosRed = Color(0xFFFF3B30)
+        Brush.horizontalGradient(listOf(IosGreen, IosRed))
+    }
+
+    val shadowColor = if (isRecording) DecibelRed.copy(alpha = 0.4f) else Color.Blue.copy(alpha = 0.4f)
+
+    Box(
+        modifier = modifier
+            .size(60.dp)
+            .shadow(10.dp, CircleShape, spotColor = shadowColor)
+            .clip(CircleShape)
+            .background(gradient)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
+            contentDescription = if (isRecording) "Stop" else "Start",
+            tint = Color.White,
+            modifier = Modifier.size(28.dp)
+        )
     }
 }

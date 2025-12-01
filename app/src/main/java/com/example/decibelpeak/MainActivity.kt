@@ -5,6 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,9 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.decibelpeak.ui.components.CircularGaugeView
+import com.example.decibelpeak.ui.components.LandscapeControlButton
 import com.example.decibelpeak.ui.components.RecordButton
 import com.example.decibelpeak.ui.components.SoundLevelIndicator
 import com.example.decibelpeak.ui.components.VisualizationCarousel
+import com.example.decibelpeak.ui.components.getDecibelColor
 import com.example.decibelpeak.ui.theme.BackgroundDark
 import com.example.decibelpeak.ui.theme.BackgroundDarker
 import com.example.decibelpeak.ui.theme.DecibelPeakTheme
@@ -95,29 +100,9 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                 )
                 .padding(innerPadding)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Header
-                Text(
-                    text = "Decibel Peak",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Sound Level Monitor",
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Visualization Carousel
-                VisualizationCarousel(
+            if (isLandscape) {
+                // LANDSCAPE LAYOUT (matching iOS)
+                LandscapeLayout(
                     viewModel = viewModel,
                     isRecording = isRecording,
                     decibelLevel = decibelLevel,
@@ -126,60 +111,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f) // Take available space
-                )
-
-                if (!isLandscape) {
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Gauge (Portrait only)
-                    CircularGaugeView(
-                        value = decibelLevel,
-                        isRecording = isRecording,
-                        modifier = Modifier
-                            .fillMaxWidth(0.92f)
-                            .aspectRatio(1f)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Sound Level Indicators
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    SoundLevelIndicator(
-                        icon = Icons.Default.Speaker,
-                        label = "Quiet",
-                        range = "20-60 dB",
-                        color = SpeakerQuiet,
-                        isActive = decibelLevel < 60
-                    )
-                    SoundLevelIndicator(
-                        icon = Icons.Default.VolumeUp,
-                        label = "Moderate",
-                        range = "60-85 dB",
-                        color = SpeakerModerate,
-                        isActive = decibelLevel >= 60 && decibelLevel < 85
-                    )
-                    SoundLevelIndicator(
-                        icon = Icons.Default.SpeakerGroup,
-                        label = "Loud",
-                        range = "85+ dB",
-                        color = SpeakerLoud,
-                        isActive = decibelLevel >= 85
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(30.dp))
-
-                // Control Button
-                RecordButton(
-                    isRecording = isRecording,
-                    onClick = {
+                    onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
                         } else {
@@ -187,9 +119,263 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                         }
                     }
                 )
-                
-                Spacer(modifier = Modifier.height(20.dp))
+            } else {
+                // PORTRAIT LAYOUT
+                PortraitLayout(
+                    viewModel = viewModel,
+                    isRecording = isRecording,
+                    decibelLevel = decibelLevel,
+                    waveformSamples = waveformSamples,
+                    frequencyBands = frequencyBands,
+                    waterfallData = waterfallData,
+                    dbHistory = dbHistory,
+                    timestampedDbHistory = timestampedDbHistory,
+                    onToggleRecording = {
+                        if (permissionState.status.isGranted) {
+                            viewModel.toggleRecording()
+                        } else {
+                            permissionState.launchPermissionRequest()
+                        }
+                    }
+                )
             }
         }
+    }
+}
+
+/**
+ * Landscape layout matching iOS horizontal mode
+ */
+@Composable
+private fun LandscapeLayout(
+    viewModel: MainViewModel,
+    isRecording: Boolean,
+    decibelLevel: Double,
+    waveformSamples: List<Float>,
+    frequencyBands: List<Float>,
+    waterfallData: List<List<Float>>,
+    dbHistory: List<Double>,
+    timestampedDbHistory: List<com.example.decibelpeak.model.TimestampedDbValue>,
+    onToggleRecording: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Main content - full screen visualization
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Small header (matching iOS)
+            Column(
+                modifier = Modifier.padding(top = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Audio Analysis",
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Real-time Frequency Spectrum",
+                    color = Color.Gray,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Full-screen visualization carousel
+            VisualizationCarousel(
+                viewModel = viewModel,
+                isRecording = isRecording,
+                decibelLevel = decibelLevel,
+                waveformSamples = waveformSamples,
+                frequencyBands = frequencyBands,
+                waterfallData = waterfallData,
+                dbHistory = dbHistory,
+                timestampedDbHistory = timestampedDbHistory,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
+
+        // Floating controls overlay at bottom
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(start = 36.dp, end = 30.dp, bottom = 30.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            // dB value at bottom left (matching iOS: 48pt font)
+            LandscapeDecibelDisplay(
+                decibelLevel = decibelLevel,
+                isRecording = isRecording
+            )
+
+            // Control button at bottom right
+            LandscapeControlButton(
+                isRecording = isRecording,
+                onClick = onToggleRecording
+            )
+        }
+    }
+}
+
+/**
+ * Floating dB display for landscape mode (matching iOS)
+ */
+@Composable
+private fun LandscapeDecibelDisplay(
+    decibelLevel: Double,
+    isRecording: Boolean
+) {
+    // Animate color changes
+    val targetColor = if (isRecording && decibelLevel > 0) {
+        getDecibelColor(decibelLevel)
+    } else {
+        Color.Gray.copy(alpha = 0.5f)
+    }
+    val animatedColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = tween(durationMillis = 200),
+        label = "decibelColor"
+    )
+
+    Row(
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        // dB number
+        Text(
+            text = if (isRecording && decibelLevel > 0) {
+                String.format("%.0f", decibelLevel)
+            } else {
+                "–"
+            },
+            color = animatedColor,
+            fontSize = 48.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // dB unit label (aligned to bottom of the number)
+        Text(
+            text = "dB",
+            color = if (isRecording) Color.Gray else Color.Gray.copy(alpha = 0.5f),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 10.dp)
+        )
+    }
+}
+
+/**
+ * Portrait layout (original layout)
+ */
+@Composable
+private fun PortraitLayout(
+    viewModel: MainViewModel,
+    isRecording: Boolean,
+    decibelLevel: Double,
+    waveformSamples: List<Float>,
+    frequencyBands: List<Float>,
+    waterfallData: List<List<Float>>,
+    dbHistory: List<Double>,
+    timestampedDbHistory: List<com.example.decibelpeak.model.TimestampedDbValue>,
+    onToggleRecording: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Header
+        Text(
+            text = "Decibel Peak",
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "Sound Level Monitor",
+            color = Color.Gray,
+            fontSize = 12.sp
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Visualization Carousel
+        VisualizationCarousel(
+            viewModel = viewModel,
+            isRecording = isRecording,
+            decibelLevel = decibelLevel,
+            waveformSamples = waveformSamples,
+            frequencyBands = frequencyBands,
+            waterfallData = waterfallData,
+            dbHistory = dbHistory,
+            timestampedDbHistory = timestampedDbHistory,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Gauge (Portrait only)
+        CircularGaugeView(
+            value = decibelLevel,
+            isRecording = isRecording,
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .aspectRatio(1f)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Sound Level Indicators
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            SoundLevelIndicator(
+                icon = Icons.Default.Speaker,
+                label = "Quiet",
+                range = "20-60 dB",
+                color = SpeakerQuiet,
+                isActive = decibelLevel < 60
+            )
+            SoundLevelIndicator(
+                icon = Icons.Default.VolumeUp,
+                label = "Moderate",
+                range = "60-85 dB",
+                color = SpeakerModerate,
+                isActive = decibelLevel >= 60 && decibelLevel < 85
+            )
+            SoundLevelIndicator(
+                icon = Icons.Default.SpeakerGroup,
+                label = "Loud",
+                range = "85+ dB",
+                color = SpeakerLoud,
+                isActive = decibelLevel >= 85
+            )
+        }
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        // Control Button
+        RecordButton(
+            isRecording = isRecording,
+            onClick = onToggleRecording
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
