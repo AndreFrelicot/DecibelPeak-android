@@ -39,9 +39,15 @@ fun RecordButton(
     modifier: Modifier = Modifier
 ) {
     val gradient = if (isRecording) {
-        Brush.horizontalGradient(listOf(DecibelRed, DecibelOrange))
+        // iOS Red to Orange
+        val IosRed = Color(0xFFFF3B30)
+        val IosOrange = Color(0xFFFF9500)
+        Brush.horizontalGradient(listOf(IosRed, IosOrange))
     } else {
-        Brush.horizontalGradient(listOf(DecibelGreen, DecibelRed))
+        // iOS Green to Red
+        val IosGreen = Color(0xFF34C759)
+        val IosRed = Color(0xFFFF3B30)
+        Brush.horizontalGradient(listOf(IosGreen, IosRed))
     }
     
     val shadowColor = if (isRecording) DecibelRed else Color.Blue
