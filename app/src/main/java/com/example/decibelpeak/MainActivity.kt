@@ -19,9 +19,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Speaker
-import androidx.compose.material.icons.filled.SpeakerGroup
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeMute
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -335,27 +335,27 @@ private fun PortraitLayout(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Sound Level Indicators
+        // Sound Level Indicators (icons matching iOS: speaker, speaker.wave.2, speaker.wave.3)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             SoundLevelIndicator(
-                icon = Icons.Default.Speaker,
+                icon = Icons.AutoMirrored.Filled.VolumeMute,  // Speaker without waves
                 label = "Quiet",
                 range = "20-60 dB",
                 color = SpeakerQuiet,
                 isActive = decibelLevel < 60
             )
             SoundLevelIndicator(
-                icon = Icons.Default.VolumeUp,
+                icon = Icons.AutoMirrored.Filled.VolumeDown,  // Speaker with 1 wave
                 label = "Moderate",
                 range = "60-85 dB",
                 color = SpeakerModerate,
                 isActive = decibelLevel >= 60 && decibelLevel < 85
             )
             SoundLevelIndicator(
-                icon = Icons.Default.SpeakerGroup,
+                icon = Icons.AutoMirrored.Filled.VolumeUp,    // Speaker with 3 waves
                 label = "Loud",
                 range = "85+ dB",
                 color = SpeakerLoud,

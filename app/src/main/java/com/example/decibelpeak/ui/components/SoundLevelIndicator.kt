@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +37,9 @@ fun SoundLevelIndicator(
             imageVector = icon,
             contentDescription = null,
             tint = if (isActive) color else Color.Gray.copy(alpha = 0.3f),
-            modifier = Modifier.scale(scale)
+            modifier = Modifier
+                .size(48.dp)  // Doubled from default 24.dp
+                .scale(scale)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
