@@ -305,7 +305,7 @@ private fun PortraitLayout(
             fontSize = 12.sp
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Visualization Carousel
         VisualizationCarousel(
@@ -322,14 +322,14 @@ private fun PortraitLayout(
                 .weight(1f)
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Gauge (Portrait only)
         CircularGaugeView(
             value = decibelLevel,
             isRecording = isRecording,
             modifier = Modifier
-                .fillMaxWidth(0.92f)
+                .fillMaxWidth(0.85f)
                 .aspectRatio(1f)
         )
 
