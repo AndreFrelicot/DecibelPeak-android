@@ -5,8 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.decibelpeak.ui.components.AnimatedNumber
 import com.example.decibelpeak.ui.components.CircularGaugeView
 import com.example.decibelpeak.ui.components.LandscapeControlButton
 import com.example.decibelpeak.ui.components.RecordButton
@@ -229,39 +228,35 @@ private fun LandscapeLayout(
 
 /**
  * Floating dB display for landscape mode (matching iOS)
+ * Uses AnimatedNumber component for per-digit animation like portrait mode
  */
 @Composable
 private fun LandscapeDecibelDisplay(
     decibelLevel: Double,
     isRecording: Boolean
 ) {
-    // Animate color changes
-    val targetColor = if (isRecording && decibelLevel > 0) {
-        getDecibelColor(decibelLevel)
-    } else {
-        Color.Gray.copy(alpha = 0.5f)
-    }
-    val animatedColor by animateColorAsState(
-        targetValue = targetColor,
-        animationSpec = tween(durationMillis = 200),
-        label = "decibelColor"
-    )
-
     Row(
         verticalAlignment = Alignment.Bottom,
         horizontalArrangement = Arrangement.Start
     ) {
-        // dB number
-        Text(
-            text = if (isRecording && decibelLevel > 0) {
-                String.format("%.0f", decibelLevel)
-            } else {
-                "–"
-            },
-            color = animatedColor,
-            fontSize = 48.sp,
-            fontWeight = FontWeight.Bold
-        )
+        // Animated dB number using same component as portrait gauge
+        if (isRecording && decibelLevel > 0) {
+            AnimatedNumber(
+                number = decibelLevel.toInt(),
+                style = androidx.compose.ui.text.TextStyle(
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = getDecibelColor(decibelLevel)
+            )
+        } else {
+            Text(
+                text = "–",
+                color = Color.Gray.copy(alpha = 0.5f),
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
 
         Spacer(modifier = Modifier.width(8.dp))
 

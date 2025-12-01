@@ -29,22 +29,22 @@ fun AnimatedNumber(
     number: Int,
     modifier: Modifier = Modifier,
     style: TextStyle = TextStyle.Default,
-    color: Color = Color.White
+    color: Color = Color.White,
+    digitWidth: androidx.compose.ui.unit.Dp? = null // Optional custom digit width
 ) {
     val numberString = number.toString()
-    
+
+    // Calculate digit width based on font size if not provided
+    // Approximate ratio: digit width ≈ fontSize * 0.6
+    val calculatedWidth = digitWidth ?: (style.fontSize.value * 0.6f).dp
+
     Row(
         modifier = modifier,
         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
     ) {
         numberString.forEachIndexed { index, char ->
-            // Use a fixed width for digits to prevent layout jitter
-            // The width needs to be wide enough for the widest digit (usually '0' or '8')
-            // We can estimate this or use a monospaced font, but let's try a Box with fixed width.
-            // For 80sp font, a digit is roughly 40-50dp.
-            
             Box(
-                modifier = Modifier.width(50.dp), // Approximate width for 80sp
+                modifier = Modifier.width(calculatedWidth),
                 contentAlignment = androidx.compose.ui.Alignment.Center
             ) {
                 AnimatedContent(
