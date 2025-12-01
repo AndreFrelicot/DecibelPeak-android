@@ -38,8 +38,8 @@ class AudioProcessor {
         val db = 20 * log10(rms.coerceAtLeast(0.00001))
         val calibratedDb = db + 110 // Calibration offset to match iOS
 
-        // Apply exponential smoothing (matching iOS: 80% old + 20% new)
-        smoothedDb = smoothedDb * 0.8 + calibratedDb * 0.2
+        // Apply exponential smoothing (increased for smoother display: 92% old + 8% new)
+        smoothedDb = smoothedDb * 0.92 + calibratedDb * 0.08
         return smoothedDb
     }
 
