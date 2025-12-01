@@ -33,8 +33,19 @@ class MainViewModel : ViewModel() {
     private val _dbHistory = MutableStateFlow<List<Double>>(emptyList())
     val dbHistory: StateFlow<List<Double>> = _dbHistory.asStateFlow()
 
-    private var lastUpdateTime = 0L
-    private var lastWaterfallUpdateTime = 0L
+    // Time-based throttling for refresh rate independence (matching iOS intervals)
+    private var lastLevelUpdateTime = 0L      // 33ms = ~30 FPS (iOS levelTimer)
+    private var lastDbHistoryUpdateTime = 0L  // 100ms = 10 FPS (iOS dbHistoryTimer)
+    private var lastWaterfallUpdateTime = 0L  // 67ms = ~15 FPS (iOS waterfall)
+    private var lastSpectrumUpdateTime = 0L   // 33ms = ~30 FPS
+
+    // iOS timing constants (in milliseconds)
+    companion object {
+        private const val LEVEL_UPDATE_INTERVAL = 33L    // ~30 FPS
+        private const val DB_HISTORY_INTERVAL = 100L     // 10 FPS
+        private const val WATERFALL_INTERVAL = 67L       // ~15 FPS
+        private const val SPECTRUM_INTERVAL = 33L        // ~30 FPS
+    }
 
     // Smoothing for waterfall (matching iOS: 70% old + 30% new)
     private var lastWaterfallBands = FloatArray(64) { 0f }
@@ -51,35 +62,39 @@ class MainViewModel : ViewModel() {
         _isRecording.value = true
         recordingJob = viewModelScope.launch {
             audioRecorder.startRecording().collect { buffer ->
-                val db = audioProcessor.calculateDecibel(buffer)
-                
-                // Throttle updates for UI stability (every ~100ms)
                 val currentTime = System.currentTimeMillis()
-                if (currentTime - lastUpdateTime > 100) {
-                    _decibelLevel.value = db
-                    lastUpdateTime = currentTime
-                }
-                
-                // Update history (keep last 100 points)
-                val currentHistory = _dbHistory.value.toMutableList()
-                if (currentHistory.size >= 100) {
-                    currentHistory.removeAt(0)
-                }
-                currentHistory.add(db)
-                _dbHistory.value = currentHistory
-                
-                // Downsample for waveform
-                val downsampled = buffer.filterIndexed { index, _ -> index % 10 == 0 }.toList()
-                _waveformSamples.value = downsampled
-
+                val db = audioProcessor.calculateDecibel(buffer)
                 val fft = audioProcessor.calculateFFT(buffer)
-                _frequencyBands.value = fft
 
-                // Throttle waterfall updates to ~15 FPS (67ms) to match iOS scroll speed
-                // This is time-based, not frame-based, so it's refresh rate independent
-                val waterfallTime = System.currentTimeMillis()
-                if (waterfallTime - lastWaterfallUpdateTime >= 67) {
-                    lastWaterfallUpdateTime = waterfallTime
+                // Decibel level + Waveform: 30 FPS (33ms) - matches iOS levelTimer
+                if (currentTime - lastLevelUpdateTime >= LEVEL_UPDATE_INTERVAL) {
+                    lastLevelUpdateTime = currentTime
+                    _decibelLevel.value = db
+                    // Downsample waveform for display
+                    val downsampled = buffer.filterIndexed { index, _ -> index % 10 == 0 }.toList()
+                    _waveformSamples.value = downsampled
+                }
+
+                // dB History: 10 FPS (100ms) - matches iOS dbHistoryTimer
+                if (currentTime - lastDbHistoryUpdateTime >= DB_HISTORY_INTERVAL) {
+                    lastDbHistoryUpdateTime = currentTime
+                    val currentHistory = _dbHistory.value.toMutableList()
+                    if (currentHistory.size >= 100) {
+                        currentHistory.removeAt(0)
+                    }
+                    currentHistory.add(db)
+                    _dbHistory.value = currentHistory
+                }
+
+                // Spectrum/FFT bands: 30 FPS (33ms)
+                if (currentTime - lastSpectrumUpdateTime >= SPECTRUM_INTERVAL) {
+                    lastSpectrumUpdateTime = currentTime
+                    _frequencyBands.value = fft
+                }
+
+                // Waterfall: 15 FPS (67ms) - matches iOS waterfall throttle
+                if (currentTime - lastWaterfallUpdateTime >= WATERFALL_INTERVAL) {
+                    lastWaterfallUpdateTime = currentTime
 
                     // Apply smoothing like iOS: 70% old + 30% new
                     val smoothingFactor = 0.3f
@@ -108,6 +123,12 @@ class MainViewModel : ViewModel() {
         _frequencyBands.value = List(64) { 0f }
         _dbHistory.value = emptyList()
         _waterfallData.value = emptyList()
+
+        // Reset all timing and smoothing state
         lastWaterfallBands = FloatArray(64) { 0f }
+        lastLevelUpdateTime = 0L
+        lastDbHistoryUpdateTime = 0L
+        lastWaterfallUpdateTime = 0L
+        lastSpectrumUpdateTime = 0L
     }
 }
