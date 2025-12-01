@@ -137,7 +137,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                         value = decibelLevel,
                         isRecording = isRecording,
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
+                            .fillMaxWidth(0.92f)
                             .aspectRatio(1f)
                     )
                 }

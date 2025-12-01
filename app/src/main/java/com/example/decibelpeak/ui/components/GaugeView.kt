@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -26,11 +27,11 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.min
 import com.example.decibelpeak.ui.theme.DecibelGreen
 import com.example.decibelpeak.ui.theme.DecibelOrange
 import com.example.decibelpeak.ui.theme.DecibelRed
 import com.example.decibelpeak.ui.theme.DecibelYellow
-import kotlin.math.min
 
 @Composable
 fun CircularGaugeView(
@@ -48,12 +49,21 @@ fun CircularGaugeView(
         label = "gaugeValue"
     )
 
-    Box(modifier = modifier) {
+    BoxWithConstraints(modifier = modifier) {
+        val density = androidx.compose.ui.platform.LocalDensity.current
+        val containerSizeDp = androidx.compose.ui.unit.min(maxWidth, maxHeight)
+        val containerSize = with(density) { containerSizeDp.toPx() }
+        val gaugeSize = containerSize * 0.75f
+        val gaugeRadius = gaugeSize / 2f
+        
         // Gauge Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val size = min(size.width, size.height)
-            val strokeWidth = size * 0.11f
-            val activeStrokeWidth = size * 0.125f
+            val canvasSize = min(size.width, size.height)
+            // Ensure we work with the same size basis, though fillMaxSize should match containerSize roughly
+            // Center is always center of canvas
+            
+            val strokeWidth = gaugeSize * 0.11f
+            val activeStrokeWidth = gaugeSize * 0.125f
             
             val startAngle = 135f
             val sweepAngle = 270f
@@ -88,8 +98,8 @@ fun CircularGaugeView(
                 sweepAngle = sweepAngle,
                 useCenter = false,
                 style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
-                size = Size(size - strokeWidth, size - strokeWidth),
-                topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
+                size = Size(gaugeSize - strokeWidth, gaugeSize - strokeWidth),
+                topLeft = center - Offset((gaugeSize - strokeWidth) / 2, (gaugeSize - strokeWidth) / 2)
             )
 
             // Active Arc
@@ -100,15 +110,15 @@ fun CircularGaugeView(
                     sweepAngle = sweepAngle * animatedValue,
                     useCenter = false,
                     style = Stroke(width = activeStrokeWidth, cap = StrokeCap.Round),
-                    size = Size(size - strokeWidth, size - strokeWidth),
-                    topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
+                    size = Size(gaugeSize - strokeWidth, gaugeSize - strokeWidth),
+                    topLeft = center - Offset((gaugeSize - strokeWidth) / 2, (gaugeSize - strokeWidth) / 2)
                 )
             }
 
             // Center Glow (Radial Gradient)
             if (animatedValue > 0) {
                 val glowColor = getDecibelColor(value).copy(alpha = 0.3f)
-                val glowRadius = size * 0.5f // ~140/280 of original
+                val glowRadius = gaugeSize * 0.5f // ~140/280 of original
                 
                 val glowBrush = Brush.radialGradient(
                     colors = listOf(glowColor, Color.Transparent),
@@ -124,21 +134,23 @@ fun CircularGaugeView(
             }
 
             // Ticks
-            val tickRadius = size / 2 - strokeWidth * 1.5f
-            val tickLengthSmall = size * 0.036f
-            val tickLengthLarge = size * 0.054f
+            // iOS: tickOffset = size * 0.55. gaugeRadius = size * 0.5.
+            // So ticks start at 0.55 * gaugeSize from center.
+            val tickStartRadius = gaugeSize * 0.55f
+            val tickLengthSmall = gaugeSize * 0.036f
+            val tickLengthLarge = gaugeSize * 0.054f
             
             for (i in 0..11) {
                 val angle = startAngle + (i.toFloat() / 11f) * sweepAngle
                 val isLarge = i % 3 == 0
                 val length = if (isLarge) tickLengthLarge else tickLengthSmall
-                val width = if (isLarge) size * 0.011f else size * 0.0036f
+                val width = if (isLarge) gaugeSize * 0.011f else gaugeSize * 0.0036f
                 
                 rotate(degrees = angle + 90f, pivot = center) {
                     drawLine(
                         color = Color.Gray.copy(alpha = 0.3f),
-                        start = center + Offset(0f, -tickRadius),
-                        end = center + Offset(0f, -tickRadius + length),
+                        start = center + Offset(0f, -tickStartRadius),
+                        end = center + Offset(0f, -(tickStartRadius + length)),
                         strokeWidth = width,
                         cap = StrokeCap.Round
                     )
@@ -148,17 +160,18 @@ fun CircularGaugeView(
         
         // Scale Labels
         val scaleLabels = listOf(20, 40, 60, 80, 100, 120)
+        // iOS: labelOffset = size * 0.66.
+        // Distance from center = 0.66 * gaugeSize.
+        // We use padding from top to position them.
+        // Box is size of container. Center is containerSize / 2.
+        // Padding = (containerSize / 2) - (0.66 * gaugeSize)
+        val labelRadius = gaugeSize * 0.63f
+        val labelPadding = (containerSize - labelRadius * 2) / 2
+        
         Box(modifier = Modifier.fillMaxSize()) {
              scaleLabels.forEach { db ->
                  val normalizedDb = (db - 20.0) / 110.0
                  val angle = 135.0 + normalizedDb * 270.0
-                 val radians = Math.toRadians(angle - 90.0) // -90 because 0 is right in trig, but we want 0 up? No, 0 is right.
-                 // Actually, let's use the rotation approach which is easier for alignment
-                 
-                 // We want to position the text at a certain radius
-                 // Radius should be outside the gauge? No, iOS screenshot shows them outside.
-                 // iOS code: .offset(y: -labelOffset) .rotationEffect(...)
-                 // This means they rotate the whole view.
                  
                  Box(
                      modifier = Modifier
@@ -169,9 +182,9 @@ fun CircularGaugeView(
                      Text(
                          text = "$db",
                          color = Color.Gray,
-                         fontSize = 12.sp,
+                         fontSize = (gaugeSize * 0.043f / density.density).sp, // Scale font size
                          modifier = Modifier
-                             .padding(top = 10.dp) // Adjust padding to push it out/in
+                             .padding(top = with(density) { labelPadding.toDp() }) 
                              .rotate(-(angle.toFloat() + 90f)) // Counter-rotate text to keep it upright
                      )
                  }
@@ -187,7 +200,7 @@ fun CircularGaugeView(
                 AnimatedNumber(
                     number = value.toInt(),
                     style = androidx.compose.ui.text.TextStyle(
-                        fontSize = 80.sp,
+                        fontSize = (gaugeSize * 0.257f / density.density).sp,
                         fontWeight = FontWeight.Bold
                     ),
                     color = getDecibelColor(value)
@@ -196,7 +209,7 @@ fun CircularGaugeView(
                 Text(
                     text = "–",
                     color = Color.Gray.copy(alpha = 0.5f),
-                    fontSize = 80.sp,
+                    fontSize = (gaugeSize * 0.257f / density.density).sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -206,7 +219,7 @@ fun CircularGaugeView(
             Text(
                 text = "dB",
                 color = Color.Gray,
-                fontSize = 24.sp
+                fontSize = (gaugeSize * 0.086f / density.density).sp
             )
             
             Spacer(modifier = Modifier.height(4.dp))
@@ -214,7 +227,7 @@ fun CircularGaugeView(
             Text(
                 text = getDecibelDescription(value),
                 color = Color.Gray.copy(alpha = 0.7f),
-                fontSize = 14.sp
+                fontSize = (gaugeSize * 0.05f / density.density).sp
             )
         }
     }
