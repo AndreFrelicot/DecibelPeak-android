@@ -3,6 +3,11 @@ package com.example.decibelpeak.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -12,12 +17,19 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
+import com.example.decibelpeak.model.TimestampedDbValue
 import com.example.decibelpeak.ui.theme.DecibelGreen
 import com.example.decibelpeak.ui.theme.DecibelOrange
 import com.example.decibelpeak.ui.theme.DecibelRed
 import com.example.decibelpeak.ui.theme.DecibelYellow
+import android.graphics.Paint
+import android.graphics.Typeface
+import kotlinx.coroutines.delay
 import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
@@ -211,66 +223,141 @@ fun FFTCircularView(
     }
 }
 
+/**
+ * Smooth scrolling dB curve view using time-based positioning (matching iOS implementation)
+ */
 @Composable
 fun DbCurveView(
-    dbHistory: List<Double>,
+    timestampedDbHistory: List<TimestampedDbValue>,
+    dbHistory: List<Double>, // For color calculation
     modifier: Modifier = Modifier
 ) {
+    // Continuous animation frame for smooth scrolling
+    var currentNanoTime by remember { mutableLongStateOf(System.nanoTime()) }
+
+    // Update time continuously for smooth animation (~60 FPS)
+    LaunchedEffect(Unit) {
+        while (true) {
+            currentNanoTime = System.nanoTime()
+            delay(16L) // ~60 FPS refresh
+        }
+    }
+
     Canvas(modifier = modifier.fillMaxSize()) {
         val width = size.width
         val height = size.height
-        
-        // Grid lines
+
+        // Constants matching iOS
+        val timeWindowSeconds = 10.0
+        val targetOffscreenSeconds = 0.3
+        val pixelsPerSecond = width / timeWindowSeconds.toFloat()
+        val startOffset = (targetOffscreenSeconds * pixelsPerSecond).toFloat()
+
+        // Grid lines and labels (matching iOS)
         val dbLevels = listOf(30, 60, 90, 120)
+
+        // Text paint for dB labels
+        val textPaint = Paint().apply {
+            color = android.graphics.Color.argb(179, 255, 255, 255) // white with 0.7 opacity
+            textSize = 10f * density
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+            isAntiAlias = true
+        }
+
         dbLevels.forEach { db ->
             val y = height * (1f - (db - 20f) / 110f)
+            // Draw grid line
             drawLine(
                 color = Color.White.copy(alpha = 0.1f),
                 start = Offset(0f, y),
                 end = Offset(width, y),
-                strokeWidth = 1f
+                strokeWidth = 0.5f
             )
+            // Draw dB label (matching iOS: x=30, y=yPosition-8)
+            drawIntoCanvas { canvas ->
+                canvas.nativeCanvas.drawText(
+                    "$db dB",
+                    30f,
+                    y - 8f,
+                    textPaint
+                )
+            }
         }
-        
-        if (dbHistory.size < 2) return@Canvas
-        
-        val path = Path()
-        val stepX = width / 100f // Fixed 100 points window
-        
-        // Start from the right and go backwards
-        val startIndex = max(0, dbHistory.size - 100)
-        val visibleHistory = dbHistory.subList(startIndex, dbHistory.size)
-        
-        visibleHistory.forEachIndexed { index, db ->
-            val x = width - (visibleHistory.size - 1 - index) * stepX
-            val normalizedDb = ((db - 20.0) / 110.0).coerceIn(0.0, 1.0)
+
+        if (timestampedDbHistory.size < 2) return@Canvas
+
+        // Collect visible points with time-based x positions
+        data class VisiblePoint(val x: Float, val y: Float)
+        val visiblePoints = mutableListOf<VisiblePoint>()
+
+        for (dataPoint in timestampedDbHistory) {
+            val dataAgeNanos = currentNanoTime - dataPoint.timestamp
+            val dataAgeSeconds = dataAgeNanos / 1_000_000_000.0
+
+            // Calculate x position based on time (smooth continuous scrolling)
+            val x = width + startOffset - (dataAgeSeconds * pixelsPerSecond).toFloat()
+
+            // Calculate y position
+            val normalizedDb = ((dataPoint.value - 20.0) / 110.0).coerceIn(0.0, 1.0)
             val y = height * (1f - normalizedDb.toFloat())
-            
-            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+
+            // Check appearance progress for smooth entry (75ms fade-in)
+            val timeSinceAppearance = currentNanoTime - dataPoint.appearanceTime
+            val appearanceProgress = (timeSinceAppearance / 75_000_000.0).coerceIn(0.0, 1.0)
+
+            // Only include points that have started appearing and are within bounds
+            if (appearanceProgress > 0 && x >= -100f && x <= width + startOffset + 50f) {
+                visiblePoints.add(VisiblePoint(x, y))
+            }
         }
-        
-        val lastDb = dbHistory.lastOrNull() ?: 0.0
+
+        if (visiblePoints.isEmpty()) return@Canvas
+
+        val lastDb = dbHistory.lastOrNull() ?: 50.0
         val color = getDecibelColor(lastDb)
-        
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(width = 3f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        )
-        
-        // Gradient fill
-        path.lineTo(width, height)
-        path.lineTo(width - (visibleHistory.size - 1) * stepX, height)
-        path.close()
-        
-        drawPath(
-            path = path,
-            brush = Brush.verticalGradient(
-                colors = listOf(color.copy(alpha = 0.6f), color.copy(alpha = 0.1f)),
-                startY = 0f,
-                endY = height
+
+        // Clip drawing to canvas bounds for smooth edge transitions
+        clipRect {
+            // Draw gradient fill
+            val fillPath = Path().apply {
+                val leftmostX = visiblePoints.minOfOrNull { it.x } ?: 0f
+                moveTo(leftmostX, height)
+
+                for (point in visiblePoints) {
+                    lineTo(point.x, point.y)
+                }
+
+                val rightmostX = visiblePoints.maxOfOrNull { it.x } ?: width
+                lineTo(rightmostX, height)
+                close()
+            }
+
+            drawPath(
+                path = fillPath,
+                brush = Brush.verticalGradient(
+                    colors = listOf(color.copy(alpha = 0.6f), color.copy(alpha = 0.1f)),
+                    startY = 0f,
+                    endY = height
+                )
             )
-        )
+
+            // Draw curve line
+            val linePath = Path().apply {
+                visiblePoints.forEachIndexed { index, point ->
+                    if (index == 0) {
+                        moveTo(point.x, point.y)
+                    } else {
+                        lineTo(point.x, point.y)
+                    }
+                }
+            }
+
+            drawPath(
+                path = linePath,
+                color = color,
+                style = Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+        }
     }
 }
 

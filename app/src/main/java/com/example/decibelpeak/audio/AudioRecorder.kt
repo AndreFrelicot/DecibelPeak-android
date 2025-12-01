@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -18,8 +19,17 @@ class AudioRecorder {
 
     @SuppressLint("MissingPermission")
     fun startRecording(): Flow<FloatArray> = flow {
+        // Use UNPROCESSED for raw audio without AGC (automatic gain control)
+        // This provides full dynamic range like iOS
+        // Falls back to VOICE_RECOGNITION (minimal processing) on older devices
+        val audioSource = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            MediaRecorder.AudioSource.UNPROCESSED
+        } else {
+            MediaRecorder.AudioSource.VOICE_RECOGNITION
+        }
+
         val recorder = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
+            audioSource,
             sampleRate,
             channelConfig,
             audioFormat,

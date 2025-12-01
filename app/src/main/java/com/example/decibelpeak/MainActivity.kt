@@ -73,6 +73,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val frequencyBands by viewModel.frequencyBands.collectAsState()
     val waterfallData by viewModel.waterfallData.collectAsState()
     val dbHistory by viewModel.dbHistory.collectAsState()
+    val timestampedDbHistory by viewModel.timestampedDbHistory.collectAsState()
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -124,6 +125,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     frequencyBands = frequencyBands,
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
+                    timestampedDbHistory = timestampedDbHistory,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f) // Take available space

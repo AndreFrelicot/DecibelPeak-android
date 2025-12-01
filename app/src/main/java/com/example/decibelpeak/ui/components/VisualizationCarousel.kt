@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.decibelpeak.model.TimestampedDbValue
 import com.example.decibelpeak.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -43,6 +44,7 @@ fun VisualizationCarousel(
     frequencyBands: List<Float>,
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
+    timestampedDbHistory: List<TimestampedDbValue>,
     modifier: Modifier = Modifier
 ) {
     val visualizations = listOf(
@@ -125,7 +127,10 @@ fun VisualizationCarousel(
                         2 -> FFTSpectrumView(frequencyBands = frequencyBands)
                         3 -> FFTCircularView(frequencyBands = frequencyBands)
                         4 -> FFTWaterfallView(waterfallData = waterfallData)
-                        5 -> DbCurveView(dbHistory = dbHistory)
+                        5 -> DbCurveView(
+                            timestampedDbHistory = timestampedDbHistory,
+                            dbHistory = dbHistory
+                        )
                     }
                 }
             } else {

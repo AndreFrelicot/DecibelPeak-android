@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.decibelpeak.audio.AudioProcessor
 import com.example.decibelpeak.audio.AudioRecorder
+import com.example.decibelpeak.model.TimestampedDbValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,10 @@ class MainViewModel : ViewModel() {
     private val _dbHistory = MutableStateFlow<List<Double>>(emptyList())
     val dbHistory: StateFlow<List<Double>> = _dbHistory.asStateFlow()
 
+    // Timestamped dB history for smooth curve scrolling (matching iOS)
+    private val _timestampedDbHistory = MutableStateFlow<List<TimestampedDbValue>>(emptyList())
+    val timestampedDbHistory: StateFlow<List<TimestampedDbValue>> = _timestampedDbHistory.asStateFlow()
+
     // Time-based throttling for refresh rate independence (matching iOS intervals)
     private var lastLevelUpdateTime = 0L      // 33ms = ~30 FPS (iOS levelTimer)
     private var lastDbHistoryUpdateTime = 0L  // 100ms = 10 FPS (iOS dbHistoryTimer)
@@ -45,6 +50,11 @@ class MainViewModel : ViewModel() {
         private const val DB_HISTORY_INTERVAL = 100L     // 10 FPS
         private const val WATERFALL_INTERVAL = 67L       // ~15 FPS
         private const val SPECTRUM_INTERVAL = 33L        // ~30 FPS
+
+        // dB Curve smooth scrolling constants (matching iOS)
+        private const val TIME_WINDOW_SECONDS = 10.0          // 10 seconds of visible data
+        private const val BUFFER_TIME_SECONDS = 1.5           // Extra buffer for offscreen
+        private const val APPEARANCE_DELAY_MS = 75_000_000L   // 75ms in nanoseconds
     }
 
     // Smoothing for waterfall (matching iOS: 70% old + 30% new)
@@ -78,12 +88,31 @@ class MainViewModel : ViewModel() {
                 // dB History: 10 FPS (100ms) - matches iOS dbHistoryTimer
                 if (currentTime - lastDbHistoryUpdateTime >= DB_HISTORY_INTERVAL) {
                     lastDbHistoryUpdateTime = currentTime
+
+                    // Legacy simple history (for compatibility)
                     val currentHistory = _dbHistory.value.toMutableList()
                     if (currentHistory.size >= 100) {
                         currentHistory.removeAt(0)
                     }
                     currentHistory.add(db)
                     _dbHistory.value = currentHistory
+
+                    // Timestamped history for smooth curve scrolling (matching iOS)
+                    val nanoTime = System.nanoTime()
+                    val newPoint = TimestampedDbValue(
+                        value = db,
+                        timestamp = nanoTime,
+                        appearanceTime = nanoTime + APPEARANCE_DELAY_MS
+                    )
+
+                    val updatedTimestampedHistory = _timestampedDbHistory.value.toMutableList()
+                    updatedTimestampedHistory.add(newPoint)
+
+                    // Remove old points outside the visible time window + buffer
+                    val cutoffTime = nanoTime - ((TIME_WINDOW_SECONDS + BUFFER_TIME_SECONDS) * 1_000_000_000L).toLong()
+                    updatedTimestampedHistory.removeAll { it.timestamp < cutoffTime }
+
+                    _timestampedDbHistory.value = updatedTimestampedHistory
                 }
 
                 // Spectrum/FFT bands: 30 FPS (33ms)
@@ -122,6 +151,7 @@ class MainViewModel : ViewModel() {
         _waveformSamples.value = emptyList()
         _frequencyBands.value = List(64) { 0f }
         _dbHistory.value = emptyList()
+        _timestampedDbHistory.value = emptyList()
         _waterfallData.value = emptyList()
 
         // Reset all timing and smoothing state
@@ -130,5 +160,6 @@ class MainViewModel : ViewModel() {
         lastDbHistoryUpdateTime = 0L
         lastWaterfallUpdateTime = 0L
         lastSpectrumUpdateTime = 0L
+        audioProcessor.resetSmoothing()
     }
 }

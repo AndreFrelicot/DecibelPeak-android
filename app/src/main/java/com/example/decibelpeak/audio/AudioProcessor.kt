@@ -26,6 +26,9 @@ class AudioProcessor {
         10f.pow(logFreq)
     }
 
+    // Smoothed dB value (matching iOS: 80% old + 20% new)
+    private var smoothedDb: Double = 0.0
+
     fun calculateDecibel(buffer: FloatArray): Double {
         var sum = 0.0
         for (sample in buffer) {
@@ -33,7 +36,15 @@ class AudioProcessor {
         }
         val rms = sqrt(sum / buffer.size)
         val db = 20 * log10(rms.coerceAtLeast(0.00001))
-        return db + 100 // Calibration offset to match iOS
+        val calibratedDb = db + 110 // Calibration offset to match iOS
+
+        // Apply exponential smoothing (matching iOS: 80% old + 20% new)
+        smoothedDb = smoothedDb * 0.8 + calibratedDb * 0.2
+        return smoothedDb
+    }
+
+    fun resetSmoothing() {
+        smoothedDb = 0.0
     }
 
     fun calculateFFT(buffer: FloatArray): List<Float> {
