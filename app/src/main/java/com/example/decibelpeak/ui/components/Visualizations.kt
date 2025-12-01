@@ -85,30 +85,32 @@ fun FFTWaterfallView(
     modifier: Modifier = Modifier
 ) {
     Canvas(modifier = modifier.fillMaxSize()) {
-        val rows = waterfallData.size
-        if (rows == 0) return@Canvas
-        
+        if (waterfallData.isEmpty()) return@Canvas
+
         val cols = waterfallData[0].size
+
+        // iOS matching: fixed row count based on orientation - no more stretching!
+        val isLandscape = size.width > size.height
+        val maxDisplayRows = if (isLandscape) 60 else 80
+
         val cellWidth = size.width / cols
-        val cellHeight = size.height / rows
-        
-        waterfallData.forEachIndexed { rowIndex, row ->
+        val cellHeight = size.height / maxDisplayRows  // Always use max, never actual count
+
+        for (rowIndex in 0 until maxDisplayRows) {
+            if (rowIndex >= waterfallData.size) break
+
+            val row = waterfallData[rowIndex]
             val y = rowIndex * cellHeight
+
             row.forEachIndexed { colIndex, amplitude ->
                 val x = colIndex * cellWidth
-                val color = getWaterfallColor(colIndex, cols, amplitude)
-                // Adjusted opacity to avoid "opaque layer" look for low amplitudes
-                // iOS uses max(0.1, ...), but we might have higher noise floor or different rendering
-                // Allowing it to go lower than 0.1 for better contrast
-                val opacity = if (amplitude == 0f) 0.0f else (amplitude * 1.5f).coerceIn(0.0f, 1.0f)
-                
-                if (opacity > 0.01f) {
-                    drawRect(
-                        color = color.copy(alpha = opacity),
-                        topLeft = Offset(x, y),
-                        size = Size(cellWidth, cellHeight)
-                    )
-                }
+                val colorWithOpacity = getWaterfallColorWithOpacity(colIndex, cols, amplitude)
+
+                drawRect(
+                    color = colorWithOpacity,
+                    topLeft = Offset(x, y),
+                    size = Size(cellWidth, cellHeight)
+                )
             }
         }
     }
@@ -272,17 +274,24 @@ fun DbCurveView(
     }
 }
 
-private fun getWaterfallColor(index: Int, totalCount: Int, amplitude: Float): Color {
+private fun getWaterfallColorWithOpacity(index: Int, totalCount: Int, amplitude: Float): Color {
     val ratio = index.toFloat() / max(totalCount - 1, 1)
+
+    // Double-log normalization for brightness (matching iOS exactly)
+    // amplitude is already dB-normalized (0-1), apply another log for perceptual uniformity
     val logAmplitude = log10(max(0.001f, amplitude) + 0.001f) + 3.0f
     val normalizedAmplitude = (logAmplitude / 3.0f).coerceIn(0.0f, 1.0f)
-    
-    // Blue to Red spectrum (240 -> 0)
-    val hue = 240f * (1.0f - ratio)
+
+    // iOS matching: Hue from Red (360°) -> Yellow-green (~72°) across frequency spectrum
+    val hue = (1.0f - ratio * 0.8f) * 360f
     val saturation = 0.8f + normalizedAmplitude * 0.2f
     val brightness = 0.3f + normalizedAmplitude * 0.7f
-    
-    return Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, saturation, brightness)))
+
+    // iOS exact opacity formula: uses raw amplitude (already dB-normalized 0-1)
+    val opacity = if (amplitude == 0f) 0.02f else (amplitude * 1.2f + 0.1f).coerceIn(0.1f, 1.0f)
+
+    val baseColor = Color(android.graphics.Color.HSVToColor(floatArrayOf(hue, saturation, brightness)))
+    return baseColor.copy(alpha = opacity)
 }
 
 private fun getColorForLevel(level: Float): Color {

@@ -42,9 +42,19 @@ class AudioProcessor {
             val im = imag[i]
             magnitudes[i] = sqrt(r * r + im * im)
         }
-        
-        // Normalize and convert to bands (simplified for now)
-        return magnitudes.take(64).map { it / fftSize } // Take first 64 bins
+
+        // Match iOS: Convert to dB scale and normalize to 0-1 range
+        val minDB = -60f
+        val maxDB = 0f
+        val dbRange = maxDB - minDB
+
+        return magnitudes.take(64).map { magnitude ->
+            // Convert to dB (matching iOS)
+            val db = 20f * log10(magnitude.coerceAtLeast(0.000001f))
+            // Clamp to range and normalize to 0-1
+            val clampedDb = db.coerceIn(minDB, maxDB)
+            (clampedDb - minDB) / dbRange
+        }
     }
 
     // Simple Cooley-Tukey FFT implementation

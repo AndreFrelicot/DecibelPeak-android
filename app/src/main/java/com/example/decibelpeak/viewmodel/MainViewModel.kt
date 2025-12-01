@@ -34,6 +34,10 @@ class MainViewModel : ViewModel() {
     val dbHistory: StateFlow<List<Double>> = _dbHistory.asStateFlow()
 
     private var lastUpdateTime = 0L
+    private var lastWaterfallUpdateTime = 0L
+
+    // Smoothing for waterfall (matching iOS: 70% old + 30% new)
+    private var lastWaterfallBands = FloatArray(64) { 0f }
 
     fun toggleRecording() {
         if (_isRecording.value) {
@@ -71,13 +75,27 @@ class MainViewModel : ViewModel() {
                 val fft = audioProcessor.calculateFFT(buffer)
                 _frequencyBands.value = fft
 
-                // Update waterfall
-                val currentWaterfall = _waterfallData.value.toMutableList()
-                if (currentWaterfall.size >= 80) {
-                    currentWaterfall.removeAt(currentWaterfall.lastIndex)
+                // Throttle waterfall updates to ~15 FPS (67ms) to match iOS scroll speed
+                // This is time-based, not frame-based, so it's refresh rate independent
+                val waterfallTime = System.currentTimeMillis()
+                if (waterfallTime - lastWaterfallUpdateTime >= 67) {
+                    lastWaterfallUpdateTime = waterfallTime
+
+                    // Apply smoothing like iOS: 70% old + 30% new
+                    val smoothingFactor = 0.3f
+                    val smoothedBands = fft.mapIndexed { i, newValue ->
+                        val smoothed = lastWaterfallBands[i] * (1f - smoothingFactor) + newValue * smoothingFactor
+                        lastWaterfallBands[i] = smoothed
+                        smoothed
+                    }
+
+                    val currentWaterfall = _waterfallData.value.toMutableList()
+                    if (currentWaterfall.size >= 80) {
+                        currentWaterfall.removeAt(currentWaterfall.lastIndex)
+                    }
+                    currentWaterfall.add(0, smoothedBands)
+                    _waterfallData.value = currentWaterfall
                 }
-                currentWaterfall.add(0, fft)
-                _waterfallData.value = currentWaterfall
             }
         }
     }
@@ -89,5 +107,7 @@ class MainViewModel : ViewModel() {
         _waveformSamples.value = emptyList()
         _frequencyBands.value = List(64) { 0f }
         _dbHistory.value = emptyList()
+        _waterfallData.value = emptyList()
+        lastWaterfallBands = FloatArray(64) { 0f }
     }
 }
