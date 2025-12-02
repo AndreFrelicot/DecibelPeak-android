@@ -60,6 +60,11 @@ class MainViewModel : ViewModel() {
     // Smoothing for waterfall (matching iOS: 70% old + 30% new)
     private var lastWaterfallBands = FloatArray(64) { 0f }
 
+    // Smoothing for waveform samples (matching iOS animation behavior)
+    // iOS uses withAnimation(.easeInOut(duration: 0.1)) + .animation(.easeInOut(duration: 0.05))
+    // We simulate this with exponential smoothing
+    private var lastWaveformSamples = FloatArray(102) { 0f }  // ~102 samples from 1024/10
+
     fun toggleRecording() {
         if (_isRecording.value) {
             stopRecording()
@@ -80,9 +85,22 @@ class MainViewModel : ViewModel() {
                 if (currentTime - lastLevelUpdateTime >= LEVEL_UPDATE_INTERVAL) {
                     lastLevelUpdateTime = currentTime
                     _decibelLevel.value = db
+
                     // Downsample waveform for display
-                    val downsampled = buffer.filterIndexed { index, _ -> index % 10 == 0 }.toList()
-                    _waveformSamples.value = downsampled
+                    val downsampled = buffer.filterIndexed { index, _ -> index % 10 == 0 }
+
+                    // Apply smoothing to waveform samples (matching iOS animation behavior)
+                    // iOS uses ~150ms total animation time, we use 0.3 smoothing factor (~100ms equivalent)
+                    val smoothingFactor = 0.3f
+                    val smoothedSamples = downsampled.mapIndexed { i, newValue ->
+                        val oldValue = if (i < lastWaveformSamples.size) lastWaveformSamples[i] else 0f
+                        val smoothed = oldValue * (1f - smoothingFactor) + newValue * smoothingFactor
+                        if (i < lastWaveformSamples.size) {
+                            lastWaveformSamples[i] = smoothed
+                        }
+                        smoothed
+                    }
+                    _waveformSamples.value = smoothedSamples
                 }
 
                 // dB History: 10 FPS (100ms) - matches iOS dbHistoryTimer
@@ -156,6 +174,7 @@ class MainViewModel : ViewModel() {
 
         // Reset all timing and smoothing state
         lastWaterfallBands = FloatArray(64) { 0f }
+        lastWaveformSamples = FloatArray(102) { 0f }
         lastLevelUpdateTime = 0L
         lastDbHistoryUpdateTime = 0L
         lastWaterfallUpdateTime = 0L

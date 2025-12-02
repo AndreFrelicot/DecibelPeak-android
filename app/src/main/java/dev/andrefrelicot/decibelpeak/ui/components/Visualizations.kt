@@ -140,19 +140,27 @@ fun SpectrumView(
         val height = size.height
         val barCount = 40
         val barWidth = width / barCount
-        
+
+        // Gain boost for visibility (higher values = taller bars, more color)
+        val isPortrait = height > width
+        val amplitudeScale = if (isPortrait) 10f else 6.25f
+
         for (i in 0 until barCount) {
             val sampleIndex = (i * samples.size) / barCount
-            val sample = if (sampleIndex < samples.size) kotlin.math.abs(samples[sampleIndex]) else 0f
+            val rawSample = if (sampleIndex < samples.size) kotlin.math.abs(samples[sampleIndex]) else 0f
+
+            // Apply amplitude scaling (matching iOS WaveformView behavior)
+            val sample = (rawSample * amplitudeScale).coerceAtMost(1f)
             val barHeight = min(sample * height, height).coerceAtLeast(4f)
-            
+
             val color = getColorForLevel(sample)
-            
+
+            // Match iOS: solid color at bottom, fading to 60% opacity at top
             drawRect(
                 brush = Brush.verticalGradient(
-                    colors = listOf(color, color.copy(alpha = 0.6f)),
-                    startY = height - barHeight,
-                    endY = height
+                    colors = listOf(color.copy(alpha = 0.6f), color),
+                    startY = height - barHeight,  // Top of bar: 60% opacity
+                    endY = height                  // Bottom of bar: solid color
                 ),
                 topLeft = Offset(i * barWidth, height - barHeight),
                 size = Size(barWidth - 2f, barHeight)
@@ -382,10 +390,12 @@ private fun getWaterfallColorWithOpacity(index: Int, totalCount: Int, amplitude:
 }
 
 private fun getColorForLevel(level: Float): Color {
+    // Thresholds lowered to match iOS visual output
+    // Android raw PCM samples are typically lower than iOS
     return when {
-        level < 0.3f -> DecibelGreen
-        level < 0.6f -> DecibelYellow
-        level < 0.8f -> DecibelOrange
+        level < 0.15f -> DecibelGreen
+        level < 0.35f -> DecibelYellow
+        level < 0.55f -> DecibelOrange
         else -> DecibelRed
     }
 }

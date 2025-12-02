@@ -38,8 +38,8 @@ class AudioProcessor {
         val db = 20 * log10(rms.coerceAtLeast(0.00001))
         val calibratedDb = db + 110 // Calibration offset to match iOS
 
-        // Apply exponential smoothing (increased for smoother display: 92% old + 8% new)
-        smoothedDb = smoothedDb * 0.92 + calibratedDb * 0.08
+        // Apply exponential smoothing (matching iOS exactly: 80% old + 20% new)
+        smoothedDb = smoothedDb * 0.8 + calibratedDb * 0.2
         return smoothedDb
     }
 
@@ -60,22 +60,24 @@ class AudioProcessor {
 
         fft(real, imag)
 
-        // Calculate magnitudes for all bins
+        // Calculate magnitude squared for all bins (matching iOS vDSP_zvmags)
+        // iOS uses vDSP_zvmags which returns real² + imag² (NOT sqrt)
         val magnitudeCount = fftSize / 2
-        val magnitudes = FloatArray(magnitudeCount)
-        for (i in magnitudes.indices) {
+        val magnitudesSquared = FloatArray(magnitudeCount)
+        for (i in magnitudesSquared.indices) {
             val r = real[i]
             val im = imag[i]
-            magnitudes[i] = sqrt(r * r + im * im)
+            magnitudesSquared[i] = r * r + im * im  // Magnitude squared, like iOS
         }
 
-        // Match iOS: Convert to dB scale and normalize to 0-1 range
+        // Match iOS exactly: Convert to dB scale and normalize to 0-1 range
+        // iOS applies 20*log10 to magnitude squared (equivalent to 40*log10(magnitude))
         val minDB = -60f
         val maxDB = 0f
         val dbRange = maxDB - minDB
 
         val dbMagnitudes = FloatArray(magnitudeCount) { i ->
-            val db = 20f * log10(magnitudes[i].coerceAtLeast(0.000001f))
+            val db = 20f * log10(magnitudesSquared[i].coerceAtLeast(0.000001f))
             val clampedDb = db.coerceIn(minDB, maxDB)
             (clampedDb - minDB) / dbRange
         }
