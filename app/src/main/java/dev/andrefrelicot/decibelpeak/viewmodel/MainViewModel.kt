@@ -8,8 +8,11 @@ import dev.andrefrelicot.decibelpeak.audio.AudioRecorder
 import dev.andrefrelicot.decibelpeak.data.CalibrationManager
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -60,6 +63,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _tempCalibrationOffset = MutableStateFlow(0.0)
     val tempCalibrationOffset: StateFlow<Double> = _tempCalibrationOffset.asStateFlow()
 
+    // Haptic feedback event for snapping to zero
+    private val _hapticFeedbackEvent = MutableSharedFlow<Unit>()
+    val hapticFeedbackEvent: SharedFlow<Unit> = _hapticFeedbackEvent.asSharedFlow()
+
     init {
         // Load saved calibration offset on startup
         _calibrationOffset.value = calibrationManager.getCalibrationOffset()
@@ -76,9 +83,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setTempCalibrationOffset(offset: Double) {
-        _tempCalibrationOffset.value = offset
+        val wasNotZero = _tempCalibrationOffset.value != 0.0
+
+        // Snap to 0 when entering the -0.5 to +0.5 range
+        val snappedOffset = if (offset > -0.5 && offset < 0.5) 0.0 else offset
+
+        _tempCalibrationOffset.value = snappedOffset
+
+        // Play haptic feedback when snapping to 0
+        if (wasNotZero && snappedOffset == 0.0) {
+            viewModelScope.launch {
+                _hapticFeedbackEvent.emit(Unit)
+            }
+        }
+
         // Apply temp offset immediately for live preview
-        audioProcessor.setCalibrationOffset(offset)
+        audioProcessor.setCalibrationOffset(snappedOffset)
     }
 
     fun saveCalibration() {

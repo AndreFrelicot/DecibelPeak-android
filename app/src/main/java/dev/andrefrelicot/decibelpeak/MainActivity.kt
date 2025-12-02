@@ -65,6 +65,7 @@ import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.flow.SharedFlow
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +93,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val selectedVisualization by viewModel.selectedVisualization.collectAsState()
     val showCalibrationOverlay by viewModel.showCalibrationOverlay.collectAsState()
     val tempCalibrationOffset by viewModel.tempCalibrationOffset.collectAsState()
+    val hapticFeedbackEvent = viewModel.hapticFeedbackEvent
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -129,6 +131,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     selectedVisualization = selectedVisualization,
                     showCalibrationOverlay = showCalibrationOverlay,
                     tempCalibrationOffset = tempCalibrationOffset,
+                    hapticFeedbackEvent = hapticFeedbackEvent,
                     onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
@@ -155,6 +158,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     selectedVisualization = selectedVisualization,
                     showCalibrationOverlay = showCalibrationOverlay,
                     tempCalibrationOffset = tempCalibrationOffset,
+                    hapticFeedbackEvent = hapticFeedbackEvent,
                     onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
@@ -213,6 +217,7 @@ private fun LandscapeLayout(
     selectedVisualization: Int,
     showCalibrationOverlay: Boolean,
     tempCalibrationOffset: Double,
+    hapticFeedbackEvent: SharedFlow<Unit>,
     onToggleRecording: () -> Unit,
     onCalibrationClick: () -> Unit,
     onCalibrationOffsetChange: (Double) -> Unit,
@@ -274,6 +279,7 @@ private fun LandscapeLayout(
                         onOffsetChange = onCalibrationOffsetChange,
                         onCancel = onCalibrationCancel,
                         onValidate = onCalibrationSave,
+                        hapticFeedbackEvent = hapticFeedbackEvent,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -384,6 +390,7 @@ private fun PortraitLayout(
     selectedVisualization: Int,
     showCalibrationOverlay: Boolean,
     tempCalibrationOffset: Double,
+    hapticFeedbackEvent: SharedFlow<Unit>,
     onToggleRecording: () -> Unit,
     onCalibrationClick: () -> Unit,
     onCalibrationOffsetChange: (Double) -> Unit,
@@ -438,6 +445,7 @@ private fun PortraitLayout(
                         onOffsetChange = onCalibrationOffsetChange,
                         onCancel = onCalibrationCancel,
                         onValidate = onCalibrationSave,
+                        hapticFeedbackEvent = hapticFeedbackEvent,
                         modifier = Modifier.fillMaxSize()
                     )
                 }

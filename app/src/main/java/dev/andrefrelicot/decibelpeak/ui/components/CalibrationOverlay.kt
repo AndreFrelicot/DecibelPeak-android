@@ -1,5 +1,6 @@
 package dev.andrefrelicot.decibelpeak.ui.components
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,11 +24,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,6 +40,7 @@ import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelRed
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelYellow
+import kotlinx.coroutines.flow.SharedFlow
 
 // iOS system blue color (matching gauge)
 private val DecibelBlue = Color(0xFF007AFF)
@@ -53,8 +57,18 @@ fun CalibrationOverlay(
     onOffsetChange: (Double) -> Unit,
     onCancel: () -> Unit,
     onValidate: () -> Unit,
+    hapticFeedbackEvent: SharedFlow<Unit>? = null,
     modifier: Modifier = Modifier
 ) {
+    val view = LocalView.current
+
+    // Handle haptic feedback events
+    LaunchedEffect(hapticFeedbackEvent) {
+        hapticFeedbackEvent?.collect {
+            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
