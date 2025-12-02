@@ -29,6 +29,13 @@ class AudioProcessor {
     // Smoothed dB value (matching iOS: 80% old + 20% new)
     private var smoothedDb: Double = 0.0
 
+    // User calibration offset (default 0.0, range: -20 to +20 dB)
+    private var userCalibrationOffset: Double = 0.0
+
+    fun setCalibrationOffset(offset: Double) {
+        userCalibrationOffset = offset
+    }
+
     fun calculateDecibel(buffer: FloatArray): Double {
         var sum = 0.0
         for (sample in buffer) {
@@ -36,7 +43,8 @@ class AudioProcessor {
         }
         val rms = sqrt(sum / buffer.size)
         val db = 20 * log10(rms.coerceAtLeast(0.00001))
-        val calibratedDb = db + 110 // Calibration offset to match iOS
+        // Base calibration (110) + user calibration offset
+        val calibratedDb = db + 110 + userCalibrationOffset
 
         // Apply exponential smoothing (matching iOS exactly: 80% old + 20% new)
         smoothedDb = smoothedDb * 0.8 + calibratedDb * 0.2

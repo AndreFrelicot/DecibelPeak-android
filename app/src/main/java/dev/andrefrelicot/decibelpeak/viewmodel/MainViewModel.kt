@@ -1,9 +1,11 @@
 package dev.andrefrelicot.decibelpeak.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dev.andrefrelicot.decibelpeak.audio.AudioProcessor
 import dev.andrefrelicot.decibelpeak.audio.AudioRecorder
+import dev.andrefrelicot.decibelpeak.data.CalibrationManager
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,10 +13,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val audioRecorder = AudioRecorder()
     private val audioProcessor = AudioProcessor()
     private var recordingJob: Job? = null
+    private val calibrationManager = CalibrationManager(application)
 
     private val _isRecording = MutableStateFlow(false)
     val isRecording: StateFlow<Boolean> = _isRecording.asStateFlow()
@@ -44,6 +47,52 @@ class MainViewModel : ViewModel() {
 
     fun setSelectedVisualization(index: Int) {
         _selectedVisualization.value = index
+    }
+
+    // Calibration state
+    private val _calibrationOffset = MutableStateFlow(0.0)
+    val calibrationOffset: StateFlow<Double> = _calibrationOffset.asStateFlow()
+
+    private val _showCalibrationOverlay = MutableStateFlow(false)
+    val showCalibrationOverlay: StateFlow<Boolean> = _showCalibrationOverlay.asStateFlow()
+
+    // Temporary calibration value while adjusting (not yet saved)
+    private val _tempCalibrationOffset = MutableStateFlow(0.0)
+    val tempCalibrationOffset: StateFlow<Double> = _tempCalibrationOffset.asStateFlow()
+
+    init {
+        // Load saved calibration offset on startup
+        _calibrationOffset.value = calibrationManager.getCalibrationOffset()
+        audioProcessor.setCalibrationOffset(_calibrationOffset.value)
+    }
+
+    fun showCalibration() {
+        _tempCalibrationOffset.value = _calibrationOffset.value
+        _showCalibrationOverlay.value = true
+    }
+
+    fun hideCalibration() {
+        _showCalibrationOverlay.value = false
+    }
+
+    fun setTempCalibrationOffset(offset: Double) {
+        _tempCalibrationOffset.value = offset
+        // Apply temp offset immediately for live preview
+        audioProcessor.setCalibrationOffset(offset)
+    }
+
+    fun saveCalibration() {
+        val newOffset = _tempCalibrationOffset.value
+        _calibrationOffset.value = newOffset
+        calibrationManager.setCalibrationOffset(newOffset)
+        audioProcessor.setCalibrationOffset(newOffset)
+        _showCalibrationOverlay.value = false
+    }
+
+    fun cancelCalibration() {
+        // Restore the original offset
+        audioProcessor.setCalibrationOffset(_calibrationOffset.value)
+        _showCalibrationOverlay.value = false
     }
 
     // Time-based throttling for refresh rate independence (matching iOS intervals)

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.automirrored.filled.VolumeDown
 import androidx.compose.material.icons.automirrored.filled.VolumeMute
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.andrefrelicot.decibelpeak.ui.components.AnimatedNumber
+import dev.andrefrelicot.decibelpeak.ui.components.CalibrationOverlay
 import dev.andrefrelicot.decibelpeak.ui.components.CircularGaugeView
 import dev.andrefrelicot.decibelpeak.ui.components.LandscapeControlButton
 import dev.andrefrelicot.decibelpeak.ui.components.RecordButton
@@ -88,6 +90,8 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val dbHistory by viewModel.dbHistory.collectAsState()
     val timestampedDbHistory by viewModel.timestampedDbHistory.collectAsState()
     val selectedVisualization by viewModel.selectedVisualization.collectAsState()
+    val showCalibrationOverlay by viewModel.showCalibrationOverlay.collectAsState()
+    val tempCalibrationOffset by viewModel.tempCalibrationOffset.collectAsState()
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -123,13 +127,19 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
                     selectedVisualization = selectedVisualization,
+                    showCalibrationOverlay = showCalibrationOverlay,
+                    tempCalibrationOffset = tempCalibrationOffset,
                     onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
                         } else {
                             permissionState.launchPermissionRequest()
                         }
-                    }
+                    },
+                    onCalibrationClick = { viewModel.showCalibration() },
+                    onCalibrationOffsetChange = { viewModel.setTempCalibrationOffset(it) },
+                    onCalibrationCancel = { viewModel.cancelCalibration() },
+                    onCalibrationSave = { viewModel.saveCalibration() }
                 )
             } else {
                 // PORTRAIT LAYOUT
@@ -143,13 +153,19 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
                     selectedVisualization = selectedVisualization,
+                    showCalibrationOverlay = showCalibrationOverlay,
+                    tempCalibrationOffset = tempCalibrationOffset,
                     onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
                         } else {
                             permissionState.launchPermissionRequest()
                         }
-                    }
+                    },
+                    onCalibrationClick = { viewModel.showCalibration() },
+                    onCalibrationOffsetChange = { viewModel.setTempCalibrationOffset(it) },
+                    onCalibrationCancel = { viewModel.cancelCalibration() },
+                    onCalibrationSave = { viewModel.saveCalibration() }
                 )
             }
 
@@ -195,7 +211,13 @@ private fun LandscapeLayout(
     dbHistory: List<Double>,
     timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
     selectedVisualization: Int,
-    onToggleRecording: () -> Unit
+    showCalibrationOverlay: Boolean,
+    tempCalibrationOffset: Double,
+    onToggleRecording: () -> Unit,
+    onCalibrationClick: () -> Unit,
+    onCalibrationOffsetChange: (Double) -> Unit,
+    onCalibrationCancel: () -> Unit,
+    onCalibrationSave: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         // Main content - full screen visualization
@@ -226,20 +248,54 @@ private fun LandscapeLayout(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Full-screen visualization carousel
-            VisualizationCarousel(
-                viewModel = viewModel,
-                isRecording = isRecording,
-                decibelLevel = decibelLevel,
-                waveformSamples = waveformSamples,
-                frequencyBands = frequencyBands,
-                waterfallData = waterfallData,
-                dbHistory = dbHistory,
-                timestampedDbHistory = timestampedDbHistory,
-                selectedVisualization = selectedVisualization,
+            // Full-screen visualization carousel with calibration overlay
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
+            ) {
+                VisualizationCarousel(
+                    viewModel = viewModel,
+                    isRecording = isRecording,
+                    decibelLevel = decibelLevel,
+                    waveformSamples = waveformSamples,
+                    frequencyBands = frequencyBands,
+                    waterfallData = waterfallData,
+                    dbHistory = dbHistory,
+                    timestampedDbHistory = timestampedDbHistory,
+                    selectedVisualization = selectedVisualization,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Calibration overlay on top of visualization (landscape)
+                if (showCalibrationOverlay) {
+                    CalibrationOverlay(
+                        currentOffset = tempCalibrationOffset,
+                        onOffsetChange = onCalibrationOffsetChange,
+                        onCancel = onCalibrationCancel,
+                        onValidate = onCalibrationSave,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        }
+
+        // Calibration button at bottom left
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 36.dp, bottom = 30.dp)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.15f))
+                .clickable { onCalibrationClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Tune,
+                contentDescription = "Calibration",
+                tint = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.size(20.dp)
             )
         }
 
@@ -248,7 +304,7 @@ private fun LandscapeLayout(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(start = 36.dp, end = 30.dp, bottom = 30.dp),
+                .padding(start = 80.dp, end = 30.dp, bottom = 30.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
@@ -326,94 +382,136 @@ private fun PortraitLayout(
     dbHistory: List<Double>,
     timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
     selectedVisualization: Int,
-    onToggleRecording: () -> Unit
+    showCalibrationOverlay: Boolean,
+    tempCalibrationOffset: Double,
+    onToggleRecording: () -> Unit,
+    onCalibrationClick: () -> Unit,
+    onCalibrationOffsetChange: (Double) -> Unit,
+    onCalibrationCancel: () -> Unit,
+    onCalibrationSave: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Header
-        Text(
-            text = "Decibel Peak",
-            color = Color.White,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Sound Level Monitor",
-            color = Color.Gray,
-            fontSize = 12.sp
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Visualization Carousel
-        VisualizationCarousel(
-            viewModel = viewModel,
-            isRecording = isRecording,
-            decibelLevel = decibelLevel,
-            waveformSamples = waveformSamples,
-            frequencyBands = frequencyBands,
-            waterfallData = waterfallData,
-            dbHistory = dbHistory,
-            timestampedDbHistory = timestampedDbHistory,
-            selectedVisualization = selectedVisualization,
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Gauge (Portrait only)
-        CircularGaugeView(
-            value = decibelLevel,
-            isRecording = isRecording,
-            modifier = Modifier
-                .fillMaxWidth(0.85f)
-                .aspectRatio(1f)
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Sound Level Indicators (icons matching iOS: speaker, speaker.wave.2, speaker.wave.3)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            SoundLevelIndicator(
-                icon = Icons.AutoMirrored.Filled.VolumeMute,  // Speaker without waves
-                label = "Quiet",
-                range = "20-60 dB",
-                color = SpeakerQuiet,
-                isActive = decibelLevel < 60
+            // Header
+            Text(
+                text = "Decibel Peak",
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
             )
-            SoundLevelIndicator(
-                icon = Icons.AutoMirrored.Filled.VolumeDown,  // Speaker with 1 wave
-                label = "Moderate",
-                range = "60-85 dB",
-                color = SpeakerModerate,
-                isActive = decibelLevel >= 60 && decibelLevel < 85
+            Text(
+                text = "Sound Level Monitor",
+                color = Color.Gray,
+                fontSize = 12.sp
             )
-            SoundLevelIndicator(
-                icon = Icons.AutoMirrored.Filled.VolumeUp,    // Speaker with 3 waves
-                label = "Loud",
-                range = "85+ dB",
-                color = SpeakerLoud,
-                isActive = decibelLevel >= 85
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Visualization Carousel with calibration overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                VisualizationCarousel(
+                    viewModel = viewModel,
+                    isRecording = isRecording,
+                    decibelLevel = decibelLevel,
+                    waveformSamples = waveformSamples,
+                    frequencyBands = frequencyBands,
+                    waterfallData = waterfallData,
+                    dbHistory = dbHistory,
+                    timestampedDbHistory = timestampedDbHistory,
+                    selectedVisualization = selectedVisualization,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Calibration overlay on top of visualization (portrait)
+                if (showCalibrationOverlay) {
+                    CalibrationOverlay(
+                        currentOffset = tempCalibrationOffset,
+                        onOffsetChange = onCalibrationOffsetChange,
+                        onCancel = onCalibrationCancel,
+                        onValidate = onCalibrationSave,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Gauge (Portrait only)
+            CircularGaugeView(
+                value = decibelLevel,
+                isRecording = isRecording,
+                modifier = Modifier
+                    .fillMaxWidth(0.85f)
+                    .aspectRatio(1f)
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Sound Level Indicators (icons matching iOS: speaker, speaker.wave.2, speaker.wave.3)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                SoundLevelIndicator(
+                    icon = Icons.AutoMirrored.Filled.VolumeMute,  // Speaker without waves
+                    label = "Quiet",
+                    range = "20-60 dB",
+                    color = SpeakerQuiet,
+                    isActive = decibelLevel < 60
+                )
+                SoundLevelIndicator(
+                    icon = Icons.AutoMirrored.Filled.VolumeDown,  // Speaker with 1 wave
+                    label = "Moderate",
+                    range = "60-85 dB",
+                    color = SpeakerModerate,
+                    isActive = decibelLevel >= 60 && decibelLevel < 85
+                )
+                SoundLevelIndicator(
+                    icon = Icons.AutoMirrored.Filled.VolumeUp,    // Speaker with 3 waves
+                    label = "Loud",
+                    range = "85+ dB",
+                    color = SpeakerLoud,
+                    isActive = decibelLevel >= 85
+                )
+            }
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            // Control Button
+            RecordButton(
+                isRecording = isRecording,
+                onClick = onToggleRecording
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
 
-        Spacer(modifier = Modifier.height(30.dp))
-
-        // Control Button
-        RecordButton(
-            isRecording = isRecording,
-            onClick = onToggleRecording
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
+        // Calibration button at bottom left
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 16.dp, bottom = 24.dp)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.15f))
+                .clickable { onCalibrationClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Tune,
+                contentDescription = "Calibration",
+                tint = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
     }
 }
