@@ -38,6 +38,14 @@ class MainViewModel : ViewModel() {
     private val _timestampedDbHistory = MutableStateFlow<List<TimestampedDbValue>>(emptyList())
     val timestampedDbHistory: StateFlow<List<TimestampedDbValue>> = _timestampedDbHistory.asStateFlow()
 
+    // Selected visualization index (persists across orientation changes)
+    private val _selectedVisualization = MutableStateFlow(0)
+    val selectedVisualization: StateFlow<Int> = _selectedVisualization.asStateFlow()
+
+    fun setSelectedVisualization(index: Int) {
+        _selectedVisualization.value = index
+    }
+
     // Time-based throttling for refresh rate independence (matching iOS intervals)
     private var lastLevelUpdateTime = 0L      // 33ms = ~30 FPS (iOS levelTimer)
     private var lastDbHistoryUpdateTime = 0L  // 100ms = 10 FPS (iOS dbHistoryTimer)

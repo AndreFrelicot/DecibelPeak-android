@@ -43,16 +43,21 @@ fun WaveformView(
         val width = size.width
         val height = size.height
         val centerY = height / 2
-        
+
+        // Gain boost for visibility (matching Spectrum visualization)
+        val isPortrait = height > width
+        val amplitudeScale = if (isPortrait) 10f else 6.25f
+
         val path = Path()
         val stepX = width / (samples.size - 1)
-        
+
         samples.forEachIndexed { index, sample ->
             val x = index * stepX
-            val y = centerY + (sample * height / 2) // Scale sample to view height
+            val scaledSample = (sample * amplitudeScale).coerceIn(-1f, 1f)
+            val y = centerY + (scaledSample * height / 2)
             if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
         }
-        
+
         drawPath(
             path = path,
             color = Color.White,

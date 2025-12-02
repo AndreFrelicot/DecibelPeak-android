@@ -78,6 +78,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val waterfallData by viewModel.waterfallData.collectAsState()
     val dbHistory by viewModel.dbHistory.collectAsState()
     val timestampedDbHistory by viewModel.timestampedDbHistory.collectAsState()
+    val selectedVisualization by viewModel.selectedVisualization.collectAsState()
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -110,6 +111,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
+                    selectedVisualization = selectedVisualization,
                     onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
@@ -129,6 +131,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
+                    selectedVisualization = selectedVisualization,
                     onToggleRecording = {
                         if (permissionState.status.isGranted) {
                             viewModel.toggleRecording()
@@ -155,6 +158,7 @@ private fun LandscapeLayout(
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
     timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
+    selectedVisualization: Int,
     onToggleRecording: () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -196,6 +200,7 @@ private fun LandscapeLayout(
                 waterfallData = waterfallData,
                 dbHistory = dbHistory,
                 timestampedDbHistory = timestampedDbHistory,
+                selectedVisualization = selectedVisualization,
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -284,6 +289,7 @@ private fun PortraitLayout(
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
     timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
+    selectedVisualization: Int,
     onToggleRecording: () -> Unit
 ) {
     Column(
@@ -317,6 +323,7 @@ private fun PortraitLayout(
             waterfallData = waterfallData,
             dbHistory = dbHistory,
             timestampedDbHistory = timestampedDbHistory,
+            selectedVisualization = selectedVisualization,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)

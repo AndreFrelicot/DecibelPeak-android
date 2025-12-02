@@ -45,6 +45,7 @@ fun VisualizationCarousel(
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
     timestampedDbHistory: List<TimestampedDbValue>,
+    selectedVisualization: Int,
     modifier: Modifier = Modifier
 ) {
     val visualizations = listOf(
@@ -55,9 +56,24 @@ fun VisualizationCarousel(
         "Waterfall",
         "dB Curve"
     )
-    
-    val pagerState = rememberPagerState(pageCount = { visualizations.size })
+
+    val pagerState = rememberPagerState(
+        initialPage = selectedVisualization,
+        pageCount = { visualizations.size }
+    )
     val scope = rememberCoroutineScope()
+
+    // Sync pager state changes back to ViewModel
+    LaunchedEffect(pagerState.currentPage) {
+        viewModel.setSelectedVisualization(pagerState.currentPage)
+    }
+
+    // Sync ViewModel state to pager (for orientation changes)
+    LaunchedEffect(selectedVisualization) {
+        if (pagerState.currentPage != selectedVisualization) {
+            pagerState.scrollToPage(selectedVisualization)
+        }
+    }
 
     Column(modifier = modifier) {
         // Header
