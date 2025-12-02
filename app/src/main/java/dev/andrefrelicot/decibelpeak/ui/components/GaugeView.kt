@@ -68,28 +68,26 @@ fun CircularGaugeView(
             val startAngle = 135f
             val sweepAngle = 270f
             
-            // Absolute Gradient
-            val mixColor = Color(0xFFFF5200) // Mix of Orange and Red for the 0-degree crossover
+            // Background gradient matching iOS: 5 colors evenly distributed over 270° arc
+            // Arc starts at 135° (0.375) and sweeps 270° to 45° (0.125)
+            // iOS uses AngularGradient with colors evenly spaced: Blue, Green, Yellow, Orange, Red
+            // Each color spans 67.5° (270° / 4 segments)
+            // Positions: Blue=135°(0.375), Green=202.5°(0.5625), Yellow=270°(0.75), Orange=337.5°(0.9375), Red=45°(0.125)
 
-            val gradientBrush = Brush.sweepGradient(
-                0.0f to mixColor,
-                0.125f to DecibelRed,
-                0.375f to DecibelGreen,
-                0.625f to DecibelYellow,
-                0.875f to DecibelOrange,
-                1.0f to mixColor,
-                center = center
-            )
-            
             val backgroundGradientBrush = Brush.sweepGradient(
-                0.0f to mixColor.copy(alpha = 0.3f),
-                0.125f to DecibelRed.copy(alpha = 0.3f),
-                0.375f to DecibelGreen.copy(alpha = 0.3f),
-                0.625f to DecibelYellow.copy(alpha = 0.3f),
-                0.875f to DecibelOrange.copy(alpha = 0.3f),
-                1.0f to mixColor.copy(alpha = 0.3f),
+                0.0f to DecibelOrange.copy(alpha = 0.3f),   // Interpolation between Orange and Red
+                0.125f to DecibelRed.copy(alpha = 0.3f),    // 45° - end of arc (Red)
+                0.25f to DecibelBlue.copy(alpha = 0.3f),    // Interpolation zone (not visible)
+                0.375f to DecibelBlue.copy(alpha = 0.3f),   // 135° - start of arc (Blue)
+                0.5625f to DecibelGreen.copy(alpha = 0.3f), // 202.5° (Green)
+                0.75f to DecibelYellow.copy(alpha = 0.3f),  // 270° (Yellow)
+                0.9375f to DecibelOrange.copy(alpha = 0.3f),// 337.5° (Orange)
+                1.0f to DecibelOrange.copy(alpha = 0.3f),   // Wraps to Red
                 center = center
             )
+
+            // Active arc uses solid color based on dB level (matching iOS)
+            val activeColor = if (isRecording) getDecibelColor(value).copy(alpha = 0.8f) else Color.Gray.copy(alpha = 0.1f)
 
             // Background Arc
             drawArc(
@@ -102,10 +100,10 @@ fun CircularGaugeView(
                 topLeft = center - Offset((gaugeSize - strokeWidth) / 2, (gaugeSize - strokeWidth) / 2)
             )
 
-            // Active Arc
+            // Active Arc (solid color matching iOS)
             if (animatedValue > 0) {
                  drawArc(
-                    brush = gradientBrush,
+                    color = activeColor,
                     startAngle = startAngle,
                     sweepAngle = sweepAngle * animatedValue,
                     useCenter = false,
