@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,25 +58,20 @@ fun VisualizationCarousel(
         "dB Curve"
     )
 
-    val pagerState = rememberPagerState(
-        initialPage = selectedVisualization,
-        pageCount = { visualizations.size }
-    )
-    val scope = rememberCoroutineScope()
+    // Key forces pager recreation when selectedVisualization changes (e.g., orientation change)
+    key(selectedVisualization) {
+        val pagerState = rememberPagerState(
+            initialPage = selectedVisualization,
+            pageCount = { visualizations.size }
+        )
+        val scope = rememberCoroutineScope()
 
-    // Sync pager state changes back to ViewModel
-    LaunchedEffect(pagerState.currentPage) {
-        viewModel.setSelectedVisualization(pagerState.currentPage)
-    }
-
-    // Sync ViewModel state to pager (for orientation changes)
-    LaunchedEffect(selectedVisualization) {
-        if (pagerState.currentPage != selectedVisualization) {
-            pagerState.scrollToPage(selectedVisualization)
+        // Sync pager state changes back to ViewModel
+        LaunchedEffect(pagerState.settledPage) {
+            viewModel.setSelectedVisualization(pagerState.settledPage)
         }
-    }
 
-    Column(modifier = modifier) {
+        Column(modifier = modifier) {
         // Header
         Row(
             modifier = Modifier
@@ -159,6 +155,7 @@ fun VisualizationCarousel(
                     Box(modifier = Modifier.fillMaxSize()) // Or draw empty grid
                 }
             }
+        }
         }
     }
 }
