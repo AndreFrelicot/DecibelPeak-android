@@ -7,7 +7,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -297,8 +300,11 @@ private fun LandscapeLayout(
             )
         }
 
-        // Control button at bottom right
-        Box(
+        // Control button at bottom right (hidden when calibration overlay is shown)
+        AnimatedVisibility(
+            visible = !showCalibrationOverlay,
+            enter = fadeIn(animationSpec = tween(300)),
+            exit = fadeOut(animationSpec = tween(300)),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 30.dp, bottom = 30.dp)
