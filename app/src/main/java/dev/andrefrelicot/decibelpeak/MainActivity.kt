@@ -232,22 +232,14 @@ private fun LandscapeLayout(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Small header (matching iOS)
-            Column(
+            // dB value at top center
+            Box(
                 modifier = Modifier.padding(top = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "Audio Analysis",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Real-time Frequency Spectrum",
-                    color = Color.Gray,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium
+                LandscapeDecibelDisplay(
+                    decibelLevel = decibelLevel,
+                    isRecording = isRecording
                 )
             }
 
@@ -305,22 +297,12 @@ private fun LandscapeLayout(
             )
         }
 
-        // Floating controls overlay at bottom
-        Row(
+        // Control button at bottom right
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .padding(start = 80.dp, end = 30.dp, bottom = 30.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
+                .align(Alignment.BottomEnd)
+                .padding(end = 30.dp, bottom = 30.dp)
         ) {
-            // dB value at bottom left (matching iOS: 48pt font)
-            LandscapeDecibelDisplay(
-                decibelLevel = decibelLevel,
-                isRecording = isRecording
-            )
-
-            // Control button at bottom right
             LandscapeControlButton(
                 isRecording = isRecording,
                 onClick = onToggleRecording
