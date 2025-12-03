@@ -286,11 +286,11 @@ private fun LandscapeLayout(
             }
         }
 
-        // Calibration button at bottom left
+        // Calibration button at top left
         Box(
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 36.dp, bottom = 30.dp)
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 16.dp)
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.15f))
@@ -503,11 +503,11 @@ private fun PortraitLayout(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // Calibration button at bottom left
+        // Calibration button at top left
         Box(
             modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 16.dp, bottom = 24.dp)
+                .align(Alignment.TopStart)
+                .padding(start = 16.dp, top = 16.dp)
                 .size(36.dp)
                 .clip(CircleShape)
                 .background(Color.White.copy(alpha = 0.15f))
