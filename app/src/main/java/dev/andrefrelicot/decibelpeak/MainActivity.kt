@@ -103,9 +103,17 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val context = LocalContext.current
     val activity = context as? Activity
 
+    // Request permission on launch
     LaunchedEffect(Unit) {
         if (!permissionState.status.isGranted) {
             permissionState.launchPermissionRequest()
+        }
+    }
+
+    // Auto-start recording when permission is granted
+    LaunchedEffect(permissionState.status.isGranted) {
+        if (permissionState.status.isGranted && !isRecording) {
+            viewModel.toggleRecording()
         }
     }
 
