@@ -65,6 +65,7 @@ import dev.andrefrelicot.decibelpeak.ui.theme.SpeakerLoud
 import dev.andrefrelicot.decibelpeak.ui.theme.SpeakerModerate
 import dev.andrefrelicot.decibelpeak.ui.theme.SpeakerQuiet
 import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
+import androidx.compose.ui.res.stringResource
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -203,7 +204,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
             ) {
                 Icon(
                     imageVector = Icons.Default.ScreenRotation,
-                    contentDescription = "Toggle orientation",
+                    contentDescription = stringResource(R.string.toggle_orientation),
                     tint = Color.White.copy(alpha = 0.8f),
                     modifier = Modifier.size(20.dp)
                 )
@@ -302,7 +303,7 @@ private fun LandscapeLayout(
         ) {
             Icon(
                 imageVector = Icons.Default.Tune,
-                contentDescription = "Calibration",
+                contentDescription = stringResource(R.string.calibration),
                 tint = Color.White.copy(alpha = 0.8f),
                 modifier = Modifier.size(20.dp)
             )
@@ -350,7 +351,7 @@ private fun LandscapeDecibelDisplay(
             )
         } else {
             Text(
-                text = "–",
+                text = stringResource(R.string.not_monitoring),
                 color = Color.Gray.copy(alpha = 0.5f),
                 fontSize = 48.sp,
                 fontWeight = FontWeight.Bold
@@ -361,7 +362,7 @@ private fun LandscapeDecibelDisplay(
 
         // dB unit label (aligned to bottom of the number)
         Text(
-            text = "dB",
+            text = stringResource(R.string.db_unit),
             color = if (isRecording) Color.Gray else Color.Gray.copy(alpha = 0.5f),
             fontSize = 16.sp,
             fontWeight = FontWeight.Medium,
@@ -402,13 +403,13 @@ private fun PortraitLayout(
         ) {
             // Header
             Text(
-                text = "Decibel Peak",
+                text = stringResource(R.string.decibel_peak),
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Sound Level Monitor",
+                text = stringResource(R.string.sound_level_monitor),
                 color = Color.Gray,
                 fontSize = 12.sp
             )
@@ -467,22 +468,22 @@ private fun PortraitLayout(
             ) {
                 SoundLevelIndicator(
                     icon = Icons.AutoMirrored.Filled.VolumeMute,  // Speaker without waves
-                    label = "Quiet",
-                    range = "20-60 dB",
+                    label = stringResource(R.string.level_quiet),
+                    range = "20-60 ${stringResource(R.string.db_unit)}",
                     color = SpeakerQuiet,
                     isActive = decibelLevel < 60
                 )
                 SoundLevelIndicator(
                     icon = Icons.AutoMirrored.Filled.VolumeDown,  // Speaker with 1 wave
-                    label = "Moderate",
-                    range = "60-85 dB",
+                    label = stringResource(R.string.level_moderate),
+                    range = "60-85 ${stringResource(R.string.db_unit)}",
                     color = SpeakerModerate,
                     isActive = decibelLevel >= 60 && decibelLevel < 85
                 )
                 SoundLevelIndicator(
                     icon = Icons.AutoMirrored.Filled.VolumeUp,    // Speaker with 3 waves
-                    label = "Loud",
-                    range = "85+ dB",
+                    label = stringResource(R.string.level_loud),
+                    range = "85+ ${stringResource(R.string.db_unit)}",
                     color = SpeakerLoud,
                     isActive = decibelLevel >= 85
                 )
@@ -512,7 +513,7 @@ private fun PortraitLayout(
         ) {
             Icon(
                 imageVector = Icons.Default.Tune,
-                contentDescription = "Calibration",
+                contentDescription = stringResource(R.string.calibration),
                 tint = Color.White.copy(alpha = 0.8f),
                 modifier = Modifier.size(20.dp)
             )

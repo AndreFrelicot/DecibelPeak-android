@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Main titles -->
+    <string name="decibel_peak">Decibel Peak</string>
+    <string name="sound_level_monitor">音量レベルモニター</string>
+
+    <!-- Units -->
+    <string name="db_unit">dB</string>
+    <string name="not_monitoring">–</string>
+
+    <!-- Sound levels -->
+    <string name="level_quiet">静か</string>
+    <string name="level_moderate">普通</string>
+    <string name="level_loud">大きい</string>
+
+    <!-- Calibration -->
+    <string name="calibration">キャリブレーション</string>
+    <string name="cancel">キャンセル</string>
+    <string name="validate">確定</string>
+
+    <!-- Accessibility -->
+    <string name="toggle_orientation">向きを切り替え</string>
+</resources>

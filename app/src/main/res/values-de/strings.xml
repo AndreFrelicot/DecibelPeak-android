@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Main titles -->
+    <string name="decibel_peak">Decibel Peak</string>
+    <string name="sound_level_monitor">Schallpegel-Monitor</string>
+
+    <!-- Units -->
+    <string name="db_unit">dB</string>
+    <string name="not_monitoring">–</string>
+
+    <!-- Sound levels -->
+    <string name="level_quiet">Leise</string>
+    <string name="level_moderate">Mäßig</string>
+    <string name="level_loud">Laut</string>
+
+    <!-- Calibration -->
+    <string name="calibration">Kalibrierung</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="validate">Bestätigen</string>
+
+    <!-- Accessibility -->
+    <string name="toggle_orientation">Ausrichtung wechseln</string>
+</resources>

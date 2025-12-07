@@ -35,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import dev.andrefrelicot.decibelpeak.R
 import dev.andrefrelicot.decibelpeak.data.CalibrationManager
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
@@ -103,7 +105,7 @@ fun CalibrationOverlay(
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Cancel",
+                contentDescription = stringResource(R.string.cancel),
                 tint = Color.Red,
                 modifier = Modifier.size(24.dp)
             )
@@ -122,7 +124,7 @@ fun CalibrationOverlay(
         ) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Validate",
+                contentDescription = stringResource(R.string.validate),
                 tint = DecibelGreen,
                 modifier = Modifier.size(24.dp)
             )
@@ -138,7 +140,7 @@ fun CalibrationOverlay(
         ) {
             // Title
             Text(
-                text = "Calibration",
+                text = stringResource(R.string.calibration),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold

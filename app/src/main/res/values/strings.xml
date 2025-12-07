@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">DecibelPeak</string>
+
+    <!-- Main titles -->
+    <string name="decibel_peak">Decibel Peak</string>
+    <string name="sound_level_monitor">Sound Level Monitor</string>
+
+    <!-- Units -->
+    <string name="db_unit">dB</string>
+    <string name="not_monitoring">–</string>
+
+    <!-- Sound levels -->
+    <string name="level_quiet">Quiet</string>
+    <string name="level_moderate">Moderate</string>
+    <string name="level_loud">Loud</string>
+
+    <!-- Calibration -->
+    <string name="calibration">Calibration</string>
+    <string name="cancel">Cancel</string>
+    <string name="validate">Validate</string>
+
+    <!-- Accessibility -->
+    <string name="toggle_orientation">Toggle orientation</string>
 </resources>
