@@ -9,9 +9,28 @@
     <string name="not_monitoring">–</string>
 
     <!-- Sound levels -->
+    <string name="level_very_quiet">とても静か</string>
     <string name="level_quiet">静か</string>
     <string name="level_moderate">普通</string>
+    <string name="level_normal_conversation">通常の会話</string>
     <string name="level_loud">大きい</string>
+    <string name="level_very_loud">とても大きい</string>
+    <string name="level_extremely_loud">非常に大きい</string>
+    <string name="level_dangerous">危険</string>
+    <string name="level_painful">苦痛</string>
+    <string name="level_threshold_of_pain">痛みの閾値</string>
+
+    <!-- Visualizations -->
+    <string name="viz_wave">波形</string>
+    <string name="viz_spectrum">スペクトル</string>
+    <string name="viz_fft_bars">FFTバー</string>
+    <string name="viz_fft_circle">FFTサークル</string>
+    <string name="viz_waterfall">ウォーターフォール</string>
+    <string name="viz_db_curve">dBカーブ</string>
+
+    <!-- Controls -->
+    <string name="start_monitoring">キャプチャ開始</string>
+    <string name="stop_monitoring">キャプチャ停止</string>
 
     <!-- Calibration -->
     <string name="calibration">キャリブレーション</string>

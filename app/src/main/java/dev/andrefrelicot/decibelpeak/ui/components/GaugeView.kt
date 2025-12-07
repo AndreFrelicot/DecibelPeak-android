@@ -24,9 +24,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.andrefrelicot.decibelpeak.R
 import kotlin.math.min
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
@@ -205,7 +207,7 @@ fun CircularGaugeView(
                 )
             } else {
                 Text(
-                    text = "–",
+                    text = stringResource(R.string.not_monitoring),
                     color = Color.Gray.copy(alpha = 0.5f),
                     fontSize = (gaugeSize * 0.257f / density.density).sp,
                     fontWeight = FontWeight.Bold
@@ -213,17 +215,17 @@ fun CircularGaugeView(
             }
             
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
-                text = "dB",
+                text = stringResource(R.string.db_unit),
                 color = Color.Gray,
                 fontSize = (gaugeSize * 0.086f / density.density).sp
             )
             
             Spacer(modifier = Modifier.height(4.dp))
-            
+
             Text(
-                text = getDecibelDescription(value),
+                text = getDecibelDescriptionResource(value),
                 color = Color.Gray.copy(alpha = 0.7f),
                 fontSize = (gaugeSize * 0.05f / density.density).sp
             )
@@ -231,18 +233,19 @@ fun CircularGaugeView(
     }
 }
 
-fun getDecibelDescription(value: Double): String {
+@Composable
+fun getDecibelDescriptionResource(value: Double): String {
     return when {
-        value < 30 -> "Very Quiet"
-        value < 50 -> "Quiet"
-        value < 60 -> "Moderate"
-        value < 70 -> "Normal Conversation"
-        value < 80 -> "Loud"
-        value < 90 -> "Very Loud"
-        value < 100 -> "Extremely Loud"
-        value < 110 -> "Dangerous"
-        value < 130 -> "Painful"
-        else -> "Threshold of Pain"
+        value < 30 -> stringResource(R.string.level_very_quiet)
+        value < 50 -> stringResource(R.string.level_quiet)
+        value < 60 -> stringResource(R.string.level_moderate)
+        value < 70 -> stringResource(R.string.level_normal_conversation)
+        value < 80 -> stringResource(R.string.level_loud)
+        value < 90 -> stringResource(R.string.level_very_loud)
+        value < 100 -> stringResource(R.string.level_extremely_loud)
+        value < 110 -> stringResource(R.string.level_dangerous)
+        value < 130 -> stringResource(R.string.level_painful)
+        else -> stringResource(R.string.level_threshold_of_pain)
     }
 }
 

@@ -9,9 +9,28 @@
     <string name="not_monitoring">–</string>
 
     <!-- Sound levels -->
+    <string name="level_very_quiet">Muito Silencioso</string>
     <string name="level_quiet">Silencioso</string>
     <string name="level_moderate">Moderado</string>
+    <string name="level_normal_conversation">Conversa Normal</string>
     <string name="level_loud">Alto</string>
+    <string name="level_very_loud">Muito Alto</string>
+    <string name="level_extremely_loud">Extremamente Alto</string>
+    <string name="level_dangerous">Perigoso</string>
+    <string name="level_painful">Doloroso</string>
+    <string name="level_threshold_of_pain">Limiar da Dor</string>
+
+    <!-- Visualizations -->
+    <string name="viz_wave">Onda</string>
+    <string name="viz_spectrum">Espectro</string>
+    <string name="viz_fft_bars">Barras FFT</string>
+    <string name="viz_fft_circle">Círculo FFT</string>
+    <string name="viz_waterfall">Cascata</string>
+    <string name="viz_db_curve">Curva dB</string>
+
+    <!-- Controls -->
+    <string name="start_monitoring">Iniciar Captura</string>
+    <string name="stop_monitoring">Parar Captura</string>
 
     <!-- Calibration -->
     <string name="calibration">Calibração</string>

@@ -28,9 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.andrefrelicot.decibelpeak.R
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
@@ -50,12 +52,12 @@ fun VisualizationCarousel(
     modifier: Modifier = Modifier
 ) {
     val visualizations = listOf(
-        "Waveform",
-        "Spectrum",
-        "FFT Bars",
-        "FFT Circle",
-        "Waterfall",
-        "dB Curve"
+        stringResource(R.string.viz_wave),
+        stringResource(R.string.viz_spectrum),
+        stringResource(R.string.viz_fft_bars),
+        stringResource(R.string.viz_fft_circle),
+        stringResource(R.string.viz_waterfall),
+        stringResource(R.string.viz_db_curve)
     )
 
     // Key forces pager recreation when selectedVisualization changes (e.g., orientation change)

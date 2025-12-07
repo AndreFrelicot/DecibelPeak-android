@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import dev.andrefrelicot.decibelpeak.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
@@ -74,7 +75,7 @@ fun RecordButton(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = if (isRecording) "Stop Capture" else "Start Capture",
+                text = if (isRecording) stringResource(R.string.stop_monitoring) else stringResource(R.string.start_monitoring),
                 color = Color.White,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
@@ -117,7 +118,7 @@ fun LandscapeControlButton(
     ) {
         Icon(
             imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
-            contentDescription = if (isRecording) "Stop" else "Start",
+            contentDescription = if (isRecording) stringResource(R.string.stop_monitoring) else stringResource(R.string.start_monitoring),
             tint = Color.White,
             modifier = Modifier.size(28.dp)
         )
