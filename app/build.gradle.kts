@@ -60,4 +60,5 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }
