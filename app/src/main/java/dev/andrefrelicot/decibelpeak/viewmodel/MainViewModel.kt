@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.andrefrelicot.decibelpeak.audio.AudioProcessor
 import dev.andrefrelicot.decibelpeak.audio.AudioRecorder
 import dev.andrefrelicot.decibelpeak.data.CalibrationManager
+import dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -43,6 +44,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Timestamped dB history for smooth curve scrolling (matching iOS)
     private val _timestampedDbHistory = MutableStateFlow<List<TimestampedDbValue>>(emptyList())
     val timestampedDbHistory: StateFlow<List<TimestampedDbValue>> = _timestampedDbHistory.asStateFlow()
+
+    // dB Peak tracking
+    private val _dbPeakData = MutableStateFlow<List<DbPeakDataPoint>>(emptyList())
+    val dbPeakData: StateFlow<List<DbPeakDataPoint>> = _dbPeakData.asStateFlow()
+
+    private val _dbPeakValue = MutableStateFlow(0.0)
+    val dbPeakValue: StateFlow<Double> = _dbPeakValue.asStateFlow()
+
+    private val _dbPeakTimeMillis = MutableStateFlow(0L)
+    val dbPeakTimeMillis: StateFlow<Long> = _dbPeakTimeMillis.asStateFlow()
+
+    private var peakBuffer = mutableListOf<DbPeakDataPoint>()
+    private var sessionPeakDb = 0.0
+    private var sessionPeakTimeMillis = 0L
+    private var frozenPeakSnapshot: List<DbPeakDataPoint>? = null
 
     // Selected visualization index (persists across orientation changes)
     private val _selectedVisualization = MutableStateFlow(0)
@@ -208,6 +224,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     updatedTimestampedHistory.removeAll { it.timestamp < cutoffTime }
 
                     _timestampedDbHistory.value = updatedTimestampedHistory
+
+                    // Peak tracking for dB Peak view
+                    val now = System.currentTimeMillis()
+                    peakBuffer.add(DbPeakDataPoint(value = db, timeMillis = now))
+
+                    // Trim rolling buffer to last 65 seconds
+                    val bufferCutoff = now - 65_000L
+                    peakBuffer.removeAll { it.timeMillis < bufferCutoff }
+
+                    // Check for new peak
+                    if (db > sessionPeakDb) {
+                        sessionPeakDb = db
+                        sessionPeakTimeMillis = now
+                        frozenPeakSnapshot = null  // new peak, unfreeze
+                    }
+
+                    // Freeze snapshot once 30s after peak
+                    val timeSincePeak = now - sessionPeakTimeMillis
+                    if (frozenPeakSnapshot == null && timeSincePeak >= 30_000L) {
+                        val windowStart = sessionPeakTimeMillis - 30_000L
+                        val windowEnd = sessionPeakTimeMillis + 30_000L
+                        frozenPeakSnapshot = peakBuffer.filter { it.timeMillis in windowStart..windowEnd }
+                    }
+
+                    // Publish: frozen snapshot if available, otherwise live view
+                    val snapshot = frozenPeakSnapshot
+                    if (snapshot != null) {
+                        _dbPeakData.value = snapshot
+                    } else {
+                        val windowStart = sessionPeakTimeMillis - 30_000L
+                        val windowEnd = sessionPeakTimeMillis + 30_000L
+                        _dbPeakData.value = peakBuffer.filter { it.timeMillis in windowStart..windowEnd }
+                    }
+                    _dbPeakValue.value = sessionPeakDb
+                    _dbPeakTimeMillis.value = sessionPeakTimeMillis
                 }
 
                 // Spectrum/FFT bands: 30 FPS (33ms)
@@ -248,6 +299,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _dbHistory.value = emptyList()
         _timestampedDbHistory.value = emptyList()
         _waterfallData.value = emptyList()
+        _dbPeakData.value = emptyList()
+        _dbPeakValue.value = 0.0
+        _dbPeakTimeMillis.value = 0L
+        peakBuffer.clear()
+        sessionPeakDb = 0.0
+        sessionPeakTimeMillis = 0L
+        frozenPeakSnapshot = null
 
         // Reset all timing and smoothing state
         lastWaterfallBands = FloatArray(64) { 0f }

@@ -27,6 +27,7 @@
     <string name="viz_fft_circle">Círculo FFT</string>
     <string name="viz_waterfall">Cascata</string>
     <string name="viz_db_curve">Curva dB</string>
+    <string name="viz_db_peak">Pico dB</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Iniciar Captura</string>

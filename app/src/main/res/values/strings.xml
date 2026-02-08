@@ -28,6 +28,7 @@
     <string name="viz_fft_circle">FFT Circle</string>
     <string name="viz_waterfall">Waterfall</string>
     <string name="viz_db_curve">dB Curve</string>
+    <string name="viz_db_peak">dB Peak</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Start Capture</string>

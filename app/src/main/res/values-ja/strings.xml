@@ -27,6 +27,7 @@
     <string name="viz_fft_circle">FFTサークル</string>
     <string name="viz_waterfall">ウォーターフォール</string>
     <string name="viz_db_curve">dBカーブ</string>
+    <string name="viz_db_peak">dBピーク</string>
 
     <!-- Controls -->
     <string name="start_monitoring">キャプチャ開始</string>

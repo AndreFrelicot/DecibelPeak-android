@@ -27,6 +27,7 @@
     <string name="viz_fft_circle">FFT-Kreis</string>
     <string name="viz_waterfall">Wasserfall</string>
     <string name="viz_db_curve">dB-Kurve</string>
+    <string name="viz_db_peak">dB-Spitze</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Aufnahme Starten</string>

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.andrefrelicot.decibelpeak.R
+import dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
@@ -48,6 +49,9 @@ fun VisualizationCarousel(
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
     timestampedDbHistory: List<TimestampedDbValue>,
+    dbPeakData: List<DbPeakDataPoint>,
+    dbPeakValue: Double,
+    dbPeakTimeMillis: Long,
     selectedVisualization: Int,
     modifier: Modifier = Modifier
 ) {
@@ -57,7 +61,8 @@ fun VisualizationCarousel(
         stringResource(R.string.viz_fft_bars),
         stringResource(R.string.viz_fft_circle),
         stringResource(R.string.viz_waterfall),
-        stringResource(R.string.viz_db_curve)
+        stringResource(R.string.viz_db_curve),
+        stringResource(R.string.viz_db_peak)
     )
 
     // Key forces pager recreation when selectedVisualization changes (e.g., orientation change)
@@ -144,6 +149,16 @@ fun VisualizationCarousel(
                         5 -> DbCurveView(
                             timestampedDbHistory = timestampedDbHistory,
                             dbHistory = dbHistory
+                        )
+                        6 -> DbPeakView(
+                            dbPeakData = dbPeakData,
+                            dbPeakValue = dbPeakValue,
+                            dbPeakTimeMillis = dbPeakTimeMillis,
+                            onNavigatePrevious = {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(5)
+                                }
+                            }
                         )
                     }
                 }

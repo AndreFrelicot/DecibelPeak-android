@@ -22,6 +22,12 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
+import dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelGreen
 import dev.andrefrelicot.decibelpeak.ui.theme.DecibelOrange
@@ -370,6 +376,235 @@ fun DbCurveView(
                 color = color,
                 style = Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
+        }
+    }
+}
+
+/**
+ * Static dB peak view showing 60-second window around the session peak (matching iOS)
+ */
+@Composable
+fun DbPeakView(
+    dbPeakData: List<DbPeakDataPoint>,
+    dbPeakValue: Double,
+    dbPeakTimeMillis: Long,
+    onNavigatePrevious: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val visibleTimeWindowMs = 15_000f  // 15 seconds visible at a time
+    val timeLabelHeightFraction = 0.12f  // reserve 12% of height for time labels below chart
+
+    var scrollTimeOffsetMs by remember { mutableFloatStateOf(Float.MIN_VALUE) }  // MIN_VALUE = auto-center
+    var dragStartOffsetMs by remember { mutableFloatStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    var totalDragPx by remember { mutableFloatStateOf(0f) }
+
+    // Auto-center when peak value changes
+    LaunchedEffect(dbPeakValue) {
+        if (!isDragging) {
+            scrollTimeOffsetMs = Float.MIN_VALUE
+        }
+    }
+
+    Canvas(
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(dbPeakData, dbPeakValue) {
+                detectHorizontalDragGestures(
+                    onDragStart = {
+                        isDragging = true
+                        totalDragPx = 0f
+                        val dataStartTime = dbPeakData.firstOrNull()?.timeMillis ?: 0L
+                        val dataDuration = ((dbPeakData.lastOrNull()?.timeMillis ?: 0L) - dataStartTime).toFloat()
+                        val maxOffset = max(0f, dataDuration - visibleTimeWindowMs)
+                        val peakOffset = (dbPeakTimeMillis - dataStartTime).toFloat()
+                        val autoOffset = max(0f, min(maxOffset, peakOffset - visibleTimeWindowMs / 2))
+                        dragStartOffsetMs = if (scrollTimeOffsetMs == Float.MIN_VALUE) autoOffset else scrollTimeOffsetMs
+                    },
+                    onHorizontalDrag = { _, dragAmount ->
+                        totalDragPx += dragAmount
+                        val pixelsPerMs = size.width / visibleTimeWindowMs
+                        val timeDelta = -totalDragPx / pixelsPerMs
+                        val dataStartTime = dbPeakData.firstOrNull()?.timeMillis ?: 0L
+                        val dataDuration = ((dbPeakData.lastOrNull()?.timeMillis ?: 0L) - dataStartTime).toFloat()
+                        val maxOffset = max(0f, dataDuration - visibleTimeWindowMs)
+                        scrollTimeOffsetMs = max(0f, min(maxOffset, dragStartOffsetMs + timeDelta))
+                    },
+                    onDragEnd = {
+                        isDragging = false
+                        // At left edge and swiped right → navigate to previous visualization
+                        if (dragStartOffsetMs <= 0.001f && totalDragPx > 150f) {
+                            onNavigatePrevious()
+                            scrollTimeOffsetMs = Float.MIN_VALUE
+                        }
+                    },
+                    onDragCancel = {
+                        isDragging = false
+                    }
+                )
+            }
+    ) {
+        val width = size.width
+        val height = size.height
+        val chartHeight = height * (1f - timeLabelHeightFraction)
+
+        if (dbPeakData.size < 2) return@Canvas
+
+        val dataStartTime = dbPeakData.first().timeMillis
+        val dataEndTime = dbPeakData.last().timeMillis
+        val dataDurationMs = (dataEndTime - dataStartTime).toFloat()
+        val peakOffsetMs = (dbPeakTimeMillis - dataStartTime).toFloat()
+
+        val maxOffset = max(0f, dataDurationMs - visibleTimeWindowMs)
+        val autoOffset = max(0f, min(maxOffset, peakOffsetMs - visibleTimeWindowMs / 2))
+        val clampedOffset = max(0f, min(maxOffset, if (scrollTimeOffsetMs == Float.MIN_VALUE) autoOffset else scrollTimeOffsetMs))
+
+        val pixelsPerMs = width / visibleTimeWindowMs
+
+        // Text paints
+        val dbLabelPaint = Paint().apply {
+            color = android.graphics.Color.argb(179, 255, 255, 255)
+            textSize = 10f * density
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.NORMAL)
+            isAntiAlias = true
+        }
+        val timeLabelPaint = Paint().apply {
+            color = android.graphics.Color.argb(128, 255, 255, 255)
+            textSize = 9f * density
+            typeface = Typeface.create("monospace", Typeface.NORMAL)
+            isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+        val peakLabelPaint = Paint().apply {
+            color = android.graphics.Color.WHITE
+            textSize = 10f * density
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            isAntiAlias = true
+            textAlign = Paint.Align.CENTER
+        }
+
+        // Background grid lines
+        val dbLevels = listOf(20, 40, 60, 80, 100, 120)
+        dbLevels.forEach { db ->
+            val y = chartHeight * (1f - (db - 20f) / 110f)
+            drawLine(
+                color = Color.White.copy(alpha = 0.1f),
+                start = Offset(0f, y),
+                end = Offset(width, y),
+                strokeWidth = 0.5f
+            )
+        }
+
+        // dB level labels
+        listOf(30, 60, 90, 120).forEach { db ->
+            val y = chartHeight * (1f - (db - 20f) / 110f)
+            drawIntoCanvas { canvas ->
+                canvas.nativeCanvas.drawText("$db dB", 30f, y - 8f, dbLabelPaint)
+            }
+        }
+
+        // Collect visible points
+        data class PeakPoint(val x: Float, val y: Float)
+        val visiblePoints = mutableListOf<PeakPoint>()
+
+        for (point in dbPeakData) {
+            val t = (point.timeMillis - dataStartTime).toFloat() - clampedOffset
+            val x = t * pixelsPerMs
+            if (x < -20f || x > width + 20f) continue
+            val normalizedDb = ((point.value - 20.0) / 110.0).coerceIn(0.0, 1.0)
+            val y = chartHeight * (1f - normalizedDb.toFloat())
+            visiblePoints.add(PeakPoint(x, y))
+        }
+
+        if (visiblePoints.isEmpty()) return@Canvas
+
+        val peakColor = getDecibelColor(dbPeakValue)
+
+        clipRect(right = width, bottom = chartHeight) {
+            // Gradient fill
+            val fillPath = Path().apply {
+                moveTo(visiblePoints.first().x, chartHeight)
+                for (p in visiblePoints) { lineTo(p.x, p.y) }
+                lineTo(visiblePoints.last().x, chartHeight)
+                close()
+            }
+            drawPath(
+                path = fillPath,
+                brush = Brush.verticalGradient(
+                    colors = listOf(peakColor.copy(alpha = 0.6f), peakColor.copy(alpha = 0.1f)),
+                    startY = 0f,
+                    endY = chartHeight
+                )
+            )
+
+            // Curve line
+            val linePath = Path().apply {
+                visiblePoints.forEachIndexed { i, p ->
+                    if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y)
+                }
+            }
+            drawPath(
+                path = linePath,
+                color = peakColor,
+                style = Stroke(width = 2f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
+
+            // Peak marker vertical dashed line
+            val peakX = (peakOffsetMs - clampedOffset) * pixelsPerMs
+            if (peakX in 0f..width) {
+                drawLine(
+                    color = Color.White.copy(alpha = 0.8f),
+                    start = Offset(peakX, 0f),
+                    end = Offset(peakX, chartHeight),
+                    strokeWidth = 1f,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
+                )
+
+                // Peak dot
+                val peakNormDb = ((dbPeakValue - 20.0) / 110.0).coerceIn(0.0, 1.0)
+                val peakY = chartHeight * (1f - peakNormDb.toFloat())
+                drawCircle(
+                    color = Color.White,
+                    radius = 4f,
+                    center = Offset(peakX, peakY)
+                )
+
+                // Peak value label with background
+                val peakText = "${dbPeakValue.toInt()} dB"
+                val textWidth = peakLabelPaint.measureText(peakText)
+                val labelX = peakX.coerceIn(textWidth / 2 + 8f, width - textWidth / 2 - 8f)
+                val labelY = 12f * density
+
+                drawRoundRect(
+                    color = peakColor.copy(alpha = 0.8f),
+                    topLeft = Offset(labelX - textWidth / 2 - 6f, labelY - 10f * density),
+                    size = Size(textWidth + 12f, 14f * density),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(4f * density)
+                )
+                drawIntoCanvas { canvas ->
+                    canvas.nativeCanvas.drawText(peakText, labelX, labelY, peakLabelPaint)
+                }
+            }
+        }
+
+        // Time labels below chart (aligned to 5-second intervals)
+        val visibleStartMs = dataStartTime + clampedOffset.toLong()
+        val visibleEndMs = visibleStartMs + visibleTimeWindowMs.toLong()
+        val firstLabelMs = ((visibleStartMs / 5000L) + 1) * 5000L  // ceil to next 5s
+
+        val timeFormat = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+        var labelMs = firstLabelMs
+        while (labelMs <= visibleEndMs) {
+            val x = (labelMs - visibleStartMs).toFloat() * pixelsPerMs
+            if (x in 10f..(width - 10f)) {
+                val timeStr = timeFormat.format(java.util.Date(labelMs))
+                drawIntoCanvas { canvas ->
+                    canvas.nativeCanvas.drawText(
+                        timeStr, x, chartHeight + (height - chartHeight) * 0.6f, timeLabelPaint
+                    )
+                }
+            }
+            labelMs += 5000L
         }
     }
 }

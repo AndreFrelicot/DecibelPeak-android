@@ -96,6 +96,9 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val waterfallData by viewModel.waterfallData.collectAsState()
     val dbHistory by viewModel.dbHistory.collectAsState()
     val timestampedDbHistory by viewModel.timestampedDbHistory.collectAsState()
+    val dbPeakData by viewModel.dbPeakData.collectAsState()
+    val dbPeakValue by viewModel.dbPeakValue.collectAsState()
+    val dbPeakTimeMillis by viewModel.dbPeakTimeMillis.collectAsState()
     val selectedVisualization by viewModel.selectedVisualization.collectAsState()
     val showCalibrationOverlay by viewModel.showCalibrationOverlay.collectAsState()
     val tempCalibrationOffset by viewModel.tempCalibrationOffset.collectAsState()
@@ -142,6 +145,9 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
+                    dbPeakData = dbPeakData,
+                    dbPeakValue = dbPeakValue,
+                    dbPeakTimeMillis = dbPeakTimeMillis,
                     selectedVisualization = selectedVisualization,
                     showCalibrationOverlay = showCalibrationOverlay,
                     tempCalibrationOffset = tempCalibrationOffset,
@@ -169,6 +175,9 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
+                    dbPeakData = dbPeakData,
+                    dbPeakValue = dbPeakValue,
+                    dbPeakTimeMillis = dbPeakTimeMillis,
                     selectedVisualization = selectedVisualization,
                     showCalibrationOverlay = showCalibrationOverlay,
                     tempCalibrationOffset = tempCalibrationOffset,
@@ -228,6 +237,9 @@ private fun LandscapeLayout(
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
     timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
+    dbPeakData: List<dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint>,
+    dbPeakValue: Double,
+    dbPeakTimeMillis: Long,
     selectedVisualization: Int,
     showCalibrationOverlay: Boolean,
     tempCalibrationOffset: Double,
@@ -274,6 +286,9 @@ private fun LandscapeLayout(
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
+                    dbPeakData = dbPeakData,
+                    dbPeakValue = dbPeakValue,
+                    dbPeakTimeMillis = dbPeakTimeMillis,
                     selectedVisualization = selectedVisualization,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -386,6 +401,9 @@ private fun PortraitLayout(
     waterfallData: List<List<Float>>,
     dbHistory: List<Double>,
     timestampedDbHistory: List<dev.andrefrelicot.decibelpeak.model.TimestampedDbValue>,
+    dbPeakData: List<dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint>,
+    dbPeakValue: Double,
+    dbPeakTimeMillis: Long,
     selectedVisualization: Int,
     showCalibrationOverlay: Boolean,
     tempCalibrationOffset: Double,
@@ -433,6 +451,9 @@ private fun PortraitLayout(
                     waterfallData = waterfallData,
                     dbHistory = dbHistory,
                     timestampedDbHistory = timestampedDbHistory,
+                    dbPeakData = dbPeakData,
+                    dbPeakValue = dbPeakValue,
+                    dbPeakTimeMillis = dbPeakTimeMillis,
                     selectedVisualization = selectedVisualization,
                     modifier = Modifier.fillMaxSize()
                 )
