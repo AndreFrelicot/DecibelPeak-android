@@ -1,17 +1,23 @@
 package dev.andrefrelicot.decibelpeak
 
+import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import org.junit.Test
 
 import org.junit.Assert.*
 
-/**
- * Example local unit test, which will execute on the development machine (host).
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun equivalentDecibelLevelUsesEnergyAverage() {
+        val powerSum = MainViewModel.linearPower(60.0)!! + MainViewModel.linearPower(70.0)!!
+        val average = MainViewModel.equivalentDecibelLevel(powerSum, 2)!!
+
+        assertEquals(67.4036, average, 0.001)
+    }
+
+    @Test
+    fun equivalentDecibelLevelRejectsInvalidInputs() {
+        assertNull(MainViewModel.linearPower(Double.NaN))
+        assertNull(MainViewModel.equivalentDecibelLevel(0.0, 2))
+        assertNull(MainViewModel.equivalentDecibelLevel(1.0, 0))
     }
 }

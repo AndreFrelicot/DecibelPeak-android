@@ -28,6 +28,7 @@
     <string name="viz_waterfall">Cascada</string>
     <string name="viz_db_curve">Curva dB</string>
     <string name="viz_db_peak">Pico dB</string>
+    <string name="session_average_db_format">Media %1$d dB</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Iniciar Captura</string>

@@ -28,6 +28,7 @@
     <string name="viz_waterfall">Wasserfall</string>
     <string name="viz_db_curve">dB-Kurve</string>
     <string name="viz_db_peak">dB-Spitze</string>
+    <string name="session_average_db_format">Ø %1$d dB</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Aufnahme Starten</string>

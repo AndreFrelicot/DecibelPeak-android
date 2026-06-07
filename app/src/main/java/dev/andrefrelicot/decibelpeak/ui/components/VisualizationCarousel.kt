@@ -37,6 +37,7 @@ import dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint
 import dev.andrefrelicot.decibelpeak.model.TimestampedDbValue
 import dev.andrefrelicot.decibelpeak.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -52,6 +53,7 @@ fun VisualizationCarousel(
     dbPeakData: List<DbPeakDataPoint>,
     dbPeakValue: Double,
     dbPeakTimeMillis: Long,
+    sessionAverageDb: Double?,
     selectedVisualization: Int,
     modifier: Modifier = Modifier
 ) {
@@ -92,6 +94,24 @@ fun VisualizationCarousel(
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
+            if (pagerState.currentPage == 6 && sessionAverageDb != null) {
+                Text(
+                    text = stringResource(
+                        R.string.session_average_db_format,
+                        sessionAverageDb.roundToInt()
+                    ),
+                    color = Color.White.copy(alpha = 0.88f),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
             
             // Pager Indicators

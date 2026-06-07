@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.log10
+import kotlin.math.pow
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val audioRecorder = AudioRecorder()
@@ -55,10 +57,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _dbPeakTimeMillis = MutableStateFlow(0L)
     val dbPeakTimeMillis: StateFlow<Long> = _dbPeakTimeMillis.asStateFlow()
 
+    private val _sessionAverageDb = MutableStateFlow<Double?>(null)
+    val sessionAverageDb: StateFlow<Double?> = _sessionAverageDb.asStateFlow()
+
     private var peakBuffer = mutableListOf<DbPeakDataPoint>()
     private var sessionPeakDb = 0.0
     private var sessionPeakTimeMillis = 0L
     private var frozenPeakSnapshot: List<DbPeakDataPoint>? = null
+    private var sessionAveragePowerSum = 0.0
+    private var sessionAverageSampleCount = 0
 
     // Selected visualization index (persists across orientation changes)
     private val _selectedVisualization = MutableStateFlow(0)
@@ -148,6 +155,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         private const val TIME_WINDOW_SECONDS = 10.0          // 10 seconds of visible data
         private const val BUFFER_TIME_SECONDS = 1.5           // Extra buffer for offscreen
         private const val APPEARANCE_DELAY_MS = 75_000_000L   // 75ms in nanoseconds
+
+        fun linearPower(decibel: Double): Double? {
+            if (!decibel.isFinite()) return null
+            val power = 10.0.pow(decibel / 10.0)
+            return power.takeIf { it.isFinite() && it > 0.0 }
+        }
+
+        fun equivalentDecibelLevel(linearPowerSum: Double, sampleCount: Int): Double? {
+            if (sampleCount <= 0 || !linearPowerSum.isFinite() || linearPowerSum <= 0.0) return null
+            val averagePower = linearPowerSum / sampleCount.toDouble()
+            if (!averagePower.isFinite() || averagePower <= 0.0) return null
+            return 10.0 * log10(averagePower)
+        }
     }
 
     // Smoothing for waterfall (matching iOS: 70% old + 30% new)
@@ -224,6 +244,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     updatedTimestampedHistory.removeAll { it.timestamp < cutoffTime }
 
                     _timestampedDbHistory.value = updatedTimestampedHistory
+
+                    linearPower(db)?.let { power ->
+                        sessionAveragePowerSum += power
+                        sessionAverageSampleCount += 1
+                        _sessionAverageDb.value = equivalentDecibelLevel(
+                            linearPowerSum = sessionAveragePowerSum,
+                            sampleCount = sessionAverageSampleCount
+                        )
+                    }
 
                     // Peak tracking for dB Peak view
                     val now = System.currentTimeMillis()
@@ -302,10 +331,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _dbPeakData.value = emptyList()
         _dbPeakValue.value = 0.0
         _dbPeakTimeMillis.value = 0L
+        _sessionAverageDb.value = null
         peakBuffer.clear()
         sessionPeakDb = 0.0
         sessionPeakTimeMillis = 0L
         frozenPeakSnapshot = null
+        sessionAveragePowerSum = 0.0
+        sessionAverageSampleCount = 0
 
         // Reset all timing and smoothing state
         lastWaterfallBands = FloatArray(64) { 0f }

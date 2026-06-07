@@ -29,6 +29,7 @@
     <string name="viz_waterfall">Waterfall</string>
     <string name="viz_db_curve">dB Curve</string>
     <string name="viz_db_peak">dB Peak</string>
+    <string name="session_average_db_format">Avg. %1$d dB</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Start Capture</string>

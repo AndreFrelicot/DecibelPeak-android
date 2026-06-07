@@ -99,6 +99,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
     val dbPeakData by viewModel.dbPeakData.collectAsState()
     val dbPeakValue by viewModel.dbPeakValue.collectAsState()
     val dbPeakTimeMillis by viewModel.dbPeakTimeMillis.collectAsState()
+    val sessionAverageDb by viewModel.sessionAverageDb.collectAsState()
     val selectedVisualization by viewModel.selectedVisualization.collectAsState()
     val showCalibrationOverlay by viewModel.showCalibrationOverlay.collectAsState()
     val tempCalibrationOffset by viewModel.tempCalibrationOffset.collectAsState()
@@ -148,6 +149,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     dbPeakData = dbPeakData,
                     dbPeakValue = dbPeakValue,
                     dbPeakTimeMillis = dbPeakTimeMillis,
+                    sessionAverageDb = sessionAverageDb,
                     selectedVisualization = selectedVisualization,
                     showCalibrationOverlay = showCalibrationOverlay,
                     tempCalibrationOffset = tempCalibrationOffset,
@@ -178,6 +180,7 @@ fun MainScreen(viewModel: MainViewModel = viewModel()) {
                     dbPeakData = dbPeakData,
                     dbPeakValue = dbPeakValue,
                     dbPeakTimeMillis = dbPeakTimeMillis,
+                    sessionAverageDb = sessionAverageDb,
                     selectedVisualization = selectedVisualization,
                     showCalibrationOverlay = showCalibrationOverlay,
                     tempCalibrationOffset = tempCalibrationOffset,
@@ -240,6 +243,7 @@ private fun LandscapeLayout(
     dbPeakData: List<dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint>,
     dbPeakValue: Double,
     dbPeakTimeMillis: Long,
+    sessionAverageDb: Double?,
     selectedVisualization: Int,
     showCalibrationOverlay: Boolean,
     tempCalibrationOffset: Double,
@@ -289,6 +293,7 @@ private fun LandscapeLayout(
                     dbPeakData = dbPeakData,
                     dbPeakValue = dbPeakValue,
                     dbPeakTimeMillis = dbPeakTimeMillis,
+                    sessionAverageDb = sessionAverageDb,
                     selectedVisualization = selectedVisualization,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -404,6 +409,7 @@ private fun PortraitLayout(
     dbPeakData: List<dev.andrefrelicot.decibelpeak.model.DbPeakDataPoint>,
     dbPeakValue: Double,
     dbPeakTimeMillis: Long,
+    sessionAverageDb: Double?,
     selectedVisualization: Int,
     showCalibrationOverlay: Boolean,
     tempCalibrationOffset: Double,
@@ -454,6 +460,7 @@ private fun PortraitLayout(
                     dbPeakData = dbPeakData,
                     dbPeakValue = dbPeakValue,
                     dbPeakTimeMillis = dbPeakTimeMillis,
+                    sessionAverageDb = sessionAverageDb,
                     selectedVisualization = selectedVisualization,
                     modifier = Modifier.fillMaxSize()
                 )

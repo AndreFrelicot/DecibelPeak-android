@@ -28,6 +28,7 @@
     <string name="viz_waterfall">Cascade</string>
     <string name="viz_db_curve">Courbe dB</string>
     <string name="viz_db_peak">Pic dB</string>
+    <string name="session_average_db_format">Moy. %1$d dB</string>
 
     <!-- Controls -->
     <string name="start_monitoring">Démarrer la Capture</string>

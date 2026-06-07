@@ -28,6 +28,7 @@
     <string name="viz_waterfall">ウォーターフォール</string>
     <string name="viz_db_curve">dBカーブ</string>
     <string name="viz_db_peak">dBピーク</string>
+    <string name="session_average_db_format">平均 %1$d dB</string>
 
     <!-- Controls -->
     <string name="start_monitoring">キャプチャ開始</string>
